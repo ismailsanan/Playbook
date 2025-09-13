@@ -1,0 +1,2 @@
+# Ducky-Notes
+Pentesting notes
