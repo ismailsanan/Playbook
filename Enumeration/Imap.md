@@ -65,6 +65,8 @@ Logout
 ```
 
 
-use evolution GUI
+## evolution GUI
+
+use it much easier to navigate with
 
 https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-imap.html?highlight=143#143993---pentesting-imap
