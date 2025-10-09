@@ -25,8 +25,8 @@ strings computer.jpg
 ```sh
 binwalk dog.jpg
 
-binwalk -e dog.jpg         ->  Automatically extract known file types
-
+#Automatically extract known file types
+binwalk -e dog.jpg 
 ```
 
 

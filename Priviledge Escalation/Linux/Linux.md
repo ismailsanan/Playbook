@@ -1,8 +1,19 @@
 - [ ] install and run Linpeas
+Network
 
+Netstat:
 
+- [ ]  All: `ss -antup`
+- [ ]  Listening connections: `ss -plunt`
+- [ ]  Check DNS: `/etc/hosts`
+- [ ] `ip a` 
+- [ ] `/etc/resolv.conf` if the host is configured to use internal DNS
+To see which other hosts the target has been communicating with we can use `arp -a`
 
-> Read Arbitrary FIle in these dirs
+### Kernel Exploits
+https://github.com/lucyoa/kernel-exploits
+
+> Files to Check 
 ```
 /etc/ssh/sshd_config ->  ssh permissions
 /etc/shadow
@@ -13,8 +24,6 @@
 >Linux privilege escalation auditing tool
 ```sh
 ./Linux_Exploit_Suggester.pl -k 3.0.0
-
-
 ./linpeas
 ```
 
@@ -54,8 +63,6 @@ example:
 
 # Commands
 
-
-
 ```sh
 #Find specific file
 find / -iname local.txt -type f 2>/dev/null
@@ -77,38 +84,9 @@ tar -xvzf community_images.tar.gz
 ps aux
 ```
 
-
-```sh
-#create new user
-sudo useradd -m <username>
-
-#change password
-sudo  passwd <username>
-
-#check the groups
-groups
-
-#specific group
-groups root
-
-#create a group
-groupadd <group>
-
-#add user to group
-usermod -a -G <group> <username>
-
-#os version
-lsb_release -a
-
-#suid/guid find command
+**suid**
+```
 find / -perm -u=s 2>/dev/null
 
 find / -perm -g=s -type f 2>/dev/null
-
-
-#change owner of the file
-sudo chown root test.sh
-
-sudo chown <user>:<group> file
 ```
-

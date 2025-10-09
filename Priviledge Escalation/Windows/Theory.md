@@ -95,3 +95,40 @@ provides a mechanism for controlling access to securable objects. this mechanism
 when processes are started  or objects are created they receive the integrity level of the principal performing this operation.
 
 when the user attempts to launch an executable file,  the new process is created with the minimum of the user integrity level  and the file integrity level.
+
+
+### Mimikatz
+
+Main Features of Mimikatz:
+- **Export credentials**: Can export plaintext passwords, NTLM hashes, Kerberos tickets, and pins from memory.
+- **Pass-the-hash**: Allows you to use NTLM password hashes to authenticate without needing the actual password.
+- **Pass-the-ticket**: Allows the use of Kerberos tickets for authentication to other services on the network.
+- **Golden and Silver tickets**: Generate Kerberos tickets that allow continued access to networks, even if passwords change.
+- **Over-pass-the-hash (Pass-the-key)**: Uses NTLM hashes and Kerberos keys to authenticate to systems.
+- **Run on local and remote system**: Can be used to extract credentials from either local or remote systems.
+- **Escalation of privileges**: Used to gain higher access rights to a system.
+
+Understanding Mimikatz’s Modules
+- **sekurlsa**: Used to extract credentials from system security processes (LSASS) memory. It can extract plaintext passwords, hashes, and Kerberos tickets.
+- **Privilege**: Used to obtain the necessary privileges (eg SeDebugPrivilege) so that it can run at elevated privileges to extract credentials.
+- **crypto**: Provides access to cryptographic functions such as certificate and private key management, which can be used for various attacks.
+- **kerberos**: Used to manage and exploit Kerberos tickets. Includes creating golden and silver tickets for extended access.
+- **tgt**: Allows TGTs (Ticket Granting Tickets) to be extracted and managed from memory for pass-the-ticket attacks.
+- **lsadump**: Used to extract information from Security Account Manager (SAM) and Active Directory database.
+- **sid**: Manages and changes SID (Security Identifier), which can be used to bypass security policies.
+
+
+What the SAM file is
+- **SAM** = _Security Account Manager_. It’s a Windows registry hive/database that stores **local** account information (usernames and password hashes) for that machine. The on-disk file lives under `%SystemRoot%\System32\config\SAM` and is mounted into the registry as `HKLM\SAM`. Windows and LSA use it to validate local logons. [picussecurity.com+1](https://www.picussecurity.com/resource/the-mitre-attck-t1003-os-credential-dumping-technique-and-its-adversary-use?utm_source=chatgpt.com)
+    
+
+What LSA and LSASS are
+- **LSA (Local Security Authority)** is the Windows subsystem responsible for authentication decisions, local security policy, and managing some sensitive secrets (cached credentials, certain keys, LSA secrets). It’s a conceptual component of Windows security. [Microsoft Learn](https://learn.microsoft.com/en-us/windows-server/security/windows-authentication/credentials-processes-in-windows-authentication?utm_source=chatgpt.com)
+    
+- **LSASS (Local Security Authority Subsystem Service)** is the _process_ that implements LSA functionality: `lsass.exe`. LSASS holds lots of sensitive material in memory (credential material, Kerberos tickets, NTLM hashes, etc.), which makes it a high-value target for attackers. [Microsoft Learn+1](https://learn.microsoft.com/en-us/windows-server/security/windows-authentication/credentials-processes-in-windows-authentication?utm_source=chatgpt.com)
+    
+ What `token::elevate` in Mimikatz means (high level)
+ 
+ - Windows uses **access tokens** to describe the identity/privileges of a process or thread (user SIDs, group membership, privileges).
+    
+- `token::elevate` in Mimikatz is a module that **tries to obtain and impersonate a more-privileged access token** (for example a SYSTEM token, LocalService/NetworkService, Domain Admin, etc.) and then run actions under that elevated security context. In short: it’s about _token impersonation/elevation_ — not magic escalation, but reusing an already available token to perform privileged actions. (Because it switches the security context, it’s commonly used before other credential-dump operations.)

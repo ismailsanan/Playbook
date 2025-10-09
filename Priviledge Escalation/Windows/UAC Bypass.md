@@ -12,7 +12,7 @@ Check admin group membership: `net localgroup administrators`
 Check privileges: `whoami /priv`
 
   If you get a 1, then UAC is enabled. Otherwise is disabled.
-```
+```sh
    Get-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System' | Select-Object EnableLUA
    reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA
 ```
@@ -20,8 +20,8 @@ Check privileges: `whoami /priv`
 
 Check UAC level:
 
-```
- Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System | Select-Object ConsentPromptBehaviorAdmin
+```sh
+Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System | Select-Object ConsentPromptBehaviorAdmin
 ```
 
 If its is 0x5 then `Always notify is enabled`

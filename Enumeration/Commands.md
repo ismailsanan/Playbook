@@ -4,7 +4,7 @@
 find / -iname local.txt -type f 2>/dev/null
 
 #Takes input from standard input  Converts that input into arguments** for another command
-find . -name "*.tmp" | xargs rm  
+find . -name "*.txt" | xargs rm  
 ```
 
 ```sh
@@ -28,6 +28,10 @@ runas /netonly /users:USER1 cmd
 ```
 
 
+>Python  virtual envirn
+```
+source ./env/bin/activate
+```
 
 
 
@@ -99,6 +103,7 @@ Test-NetConnection -ComputerName $ip -Port $port
 >enum network ports
 ```
 netstat -ltpn
+ss -ltpn
 ```
 
 
@@ -107,3 +112,34 @@ netstat -ltpn
 ```
 sudo responder -I tun0 -wv
 ```
+
+
+```sh
+#create new user
+sudo useradd -m <username>
+
+#change password
+sudo  passwd <username>
+
+#check the groups
+groups
+
+#specific group
+groups root
+
+#create a group
+groupadd <group>
+
+#add user to group
+usermod -a -G <group> <username>
+
+#os version
+lsb_release -a
+
+#change owner of the file
+sudo chown root test.sh
+
+sudo chown <user>:<group> file
+```
+
+

