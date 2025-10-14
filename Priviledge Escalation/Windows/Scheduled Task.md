@@ -21,5 +21,9 @@ Get-ScheduledTaks -TaskName "Simple"  | Format-List *
 
 #Details of the task
 Export-ScheduledTaks -TaskName "Simple"  -TaskPath "C:\XXX"
+
+
+# query format list verbose taskname "some task"
+schtasks  /query /fo LIST /v  /TN "FTP backup" 
 ```
 

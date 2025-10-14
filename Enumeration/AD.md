@@ -56,6 +56,13 @@ GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
 ```
 
 
+>list users in domain
+```
+net user /domain
+
+```
+
+
 #### PowerView
 
 [powershellmafia]
@@ -115,8 +122,15 @@ bloodhound-python -u [usename] -p [password] -ns $ip  -d [domain] -c all
 GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
 ```
 
+>Tickets 
 
+**Common Service Types:**
 
+- **`cifs`** = File sharing (SMB)
+- **`ldap`** = Active Directory access
+- **`HTTP`** = Web services
+- **`HOST`** = General host access
+- **`DNS`** = DNS services
 #### Responder 
 
 LMNR for capturing hashes 

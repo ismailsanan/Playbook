@@ -7,6 +7,8 @@ smbclient -L //10.10.11.35/
 smbclient  //10.10.11.35//<share_name>
 
 smbclient //10.10.11.174/support-tools -U guest
+
+	smbclient //10.10.11.174/support-tools -U oscp/guest
 ```
 
 >Download all files

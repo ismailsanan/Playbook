@@ -98,6 +98,13 @@ ip a
 Test-NetConnection -ComputerName $ip -Port $port 
 ```
 
+>Host Discovery
+```
+arp -a (neighbor IPs)
+route print (reachable subnets)
+netstat -an (active connections)
+nbtstat -A <ip> (NetBIOS names).
+```
 
 
 >enum network ports

