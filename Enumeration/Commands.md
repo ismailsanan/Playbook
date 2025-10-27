@@ -150,3 +150,16 @@ sudo chown <user>:<group> file
 ```
 
 
+
+>Sublime
+```sh
+#replace multiple new line with one
+ctrl+H
+
+#switch to regulare expression
+\n{2,}
+
+#Replace All 
+\n
+
+```

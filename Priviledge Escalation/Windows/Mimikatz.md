@@ -40,6 +40,9 @@ lsadump::sam
 #dump lsa secret
 lsadump::secrets
 
+#dump cached credentials
+lsadump::cache
+
 
 
 #extract tickets

