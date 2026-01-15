@@ -1,6 +1,6 @@
 # Table of contents
 
-* [PlayBook](README.md)
+* [Playbook](README.md)
 * [Active Directory](active-directory/README.md)
   * [AD Exploits](active-directory/ad-exploits.md)
   * [AD Tools](<Active Directory/AD Tools.md>)
