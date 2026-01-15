@@ -34,3 +34,11 @@ binwalk -e dog.jpg
 ```
 ldd psp64
 ```
+
+
+>information gathering metadata
+```sh
+#Metagoofil is an open-source information-gathering tool designed to extract metadata from public documents available on websites
+metagoofil -d [domain] -t [filetypes] -l [limit] -n [number] -o [output_directory] -f [output_file]
+
+```

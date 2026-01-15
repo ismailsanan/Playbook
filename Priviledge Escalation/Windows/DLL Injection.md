@@ -73,3 +73,8 @@ DLL Hijacking involves a few more steps. First, you need to pinpoint a DLL the t
 
 
 procmon only captures information while it is actively running
+
+
+trigger  DLL if system32 is writable 
+
+https://github.com/sailay1996/WerTrigger

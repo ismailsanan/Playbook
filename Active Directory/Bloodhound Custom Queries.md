@@ -1,5 +1,14 @@
 
 
+
+> Update neo4j queries
+```sh
+# access the neo4j docker 
+docker exec -it <container iD> cypher-shell -u <user> -p <pass>
+
+ MATCH (c1:Computer{samaccountname:"AREA"})-[r:HasSession]->(u:User{samaccountname:"pepe"}) delete r;
+
+```
 ## Practical Custom Query Examples
 
 Basic Syntax **Cypher**

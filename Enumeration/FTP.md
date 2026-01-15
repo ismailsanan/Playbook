@@ -15,9 +15,16 @@ wget -r --user="USERNAME" --password="PASSWORD" ftp://server.com/
 
 ```
 
-#### Bruteforcing with Hydra
+>lftp is the enhanced version of ftp. It's easier to use than ftp.
 ```
-hydra [-L users.txt or -l user_name] [-P pass.txt or -p password] -f [-S port] ftp://X.X.X.X
+lftp {IP}
+```
+#### Bruteforcing with Hydra
+```sh
+hydra [-L users.txt or -l user_name] [-P pass.txt or -p password] -f [-s port] ftp://X.X.X.X
+
+#example
+hydra -l admin -P /usr/share/wordlists/rockyou.txt -e nsr -f ftp://192.168.68.46
 ```
 
 

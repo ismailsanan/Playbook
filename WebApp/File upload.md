@@ -43,6 +43,8 @@ File uploads vulns are detected when the  app allows user to  upload a file with
         - JPG: `\xff\xd8\xff`
         - GIF: `GIF87a` OR `GIF8;`
 
+-  `.htaccess `FIle to overwrite configuration 
+	-  addtType custom extention or allow access common extensions 
 
 **how do server handle requests for static files**:
 

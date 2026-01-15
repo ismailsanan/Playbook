@@ -1,6 +1,4 @@
 
-
-
 ### Notes
 
 - When encountering blocked requests try to figure out what is blocking it we can basically send intercept a request by the proxy intercpet and intercept its response editing some data to make our payload work 

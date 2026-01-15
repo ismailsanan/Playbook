@@ -1,0 +1,209 @@
+{
+  "main": {
+    "id": "4a958a9359ad0599",
+    "type": "split",
+    "children": [
+      {
+        "id": "3e2852a6f52fbbc4",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d940a02e7006b56a",
+            "type": "leaf",
+            "state": {
+              "type": "image",
+              "state": {
+                "file": "Attachements/Pasted image 20260114212823.png"
+              },
+              "icon": "lucide-image",
+              "title": "Pasted image 20260114212823"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "9c846013a630edf8",
+    "type": "split",
+    "children": [
+      {
+        "id": "eda136705823330e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4b08a1b4a2bd3c49",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "a24070b7fad83930",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "evil-win",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "0d77de055fff8083",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 283.5
+  },
+  "right": {
+    "id": "daaa358db2a230ae",
+    "type": "split",
+    "children": [
+      {
+        "id": "bac4a62f8e28dcad",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "12da44407f0fbe05",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "4241e19b90964f0f",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "6515db8775afa126",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "218eed185ec1791b",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "4b08a1b4a2bd3c49",
+  "lastOpenFiles": [
+    "Attachements/Pasted image 20260114230840.png",
+    "Active Directory/AD Exploits/Pass Stuff.md",
+    "Post Exploit/File Transfer.md",
+    "Active Directory/AD Tools.md",
+    "Priviledge Escalation/Windows/Mimikatz.md",
+    "Enumeration/Commands.md",
+    "Active Directory/AD Exploits/Trust Abuse.md",
+    "Active Directory/AD Exploits/Silver Ticket.md",
+    "Active Directory/AD Exploits/SID History Injection.md",
+    "Active Directory/AD Exploits/Kerboroasting.md",
+    "Active Directory/AD Exploits/ADCS.md",
+    "Active Directory/AD Exploits/ASREPRoast.md",
+    "Active Directory/AD Exploits/DCSync.md",
+    "Active Directory/AD Exploits/Delegation Attacks.md",
+    "Active Directory/AD Exploits/Golden Ticket.md",
+    "Active Directory/AD CheckList.md",
+    "Active Directory/Bloodhound Custom Queries.md",
+    "Post Exploit/Access Machine.md",
+    "Lab WalkThough/oscp-C.md",
+    "Attachements/Pasted image 20260114225929.png",
+    "Attachements/Pasted image 20260114225927.png",
+    "Attachements/Pasted image 20260114225314.png",
+    "Priviledge Escalation/Windows/Credentials & files.md",
+    "Priviledge Escalation/Windows/Tools & Commands.md",
+    "Priviledge Escalation/Windows/Token Abuse.md",
+    "Attachements/Pasted image 20260114224845.png",
+    "Attachements/Pasted image 20260114224252.png",
+    "Attachements/Pasted image 20260114223900.png",
+    "Attachements/Pasted image 20260114223345.png",
+    "Enumeration/NXC.md",
+    "Lab WalkThough/oscp-C.md",
+    "Attachements/Pasted image 20260114223153.png",
+    "Attachements/Pasted image 20260114222151.png",
+    "Lab WalkThough/oscp-A.md",
+    "Post Exploit/Pivoting.md",
+    "Attachements/Pasted image 20260114214619.png",
+    "Lab WalkThough/Untitled",
+    "Attachements",
+    "Priviledge Escalation/Untitled"
+  ]
+}

