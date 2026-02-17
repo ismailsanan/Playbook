@@ -25,7 +25,7 @@ Referenced
 ```
 
 ###### XXE Entity Example
-```
+```http
 <!--?xml version="1.0" ?-->
 <!DOCTYPE replace [<!ENTITY xxe "XXE"> ]>
  <userInfo>

@@ -9,7 +9,7 @@ JSON web tokens (JWTs) use to send cryptographically signed JSON data, and most 
 - `kid` (Key ID) — used to identify the correct key (if more than one)
 
 
-- [ ]    run  JWT tool in `all mode`
+-   run  JWT tool in `all mode`
 
 ``` BASH
 python3 jwt_tool.py -M at \
@@ -24,7 +24,7 @@ python3 jwt_tool.py -Q "jwttool_706649b802c9f5e41052062a3787b291"
 ```
 
 
-- [ ] crack with  hackcat
+-  crack with  hackcat
 
 
 command to crack payload secret key 
@@ -32,11 +32,11 @@ command to crack payload secret key
 hashcat -a 0 -m 16500 <jwt> <wordlist>
 ```
 
---show after crack to show the result  `<jwt> : <secretkey>`
+`--show `after crack to show the result  `<jwt> : <secretkey>`
 
 ### Attacks
 
-- [ ]  Using `None` as the algorithm 
+-  Using `None` as the algorithm 
 
 ```json
 {  
@@ -46,7 +46,7 @@ hashcat -a 0 -m 16500 <jwt> <wordlist>
 ```
 
 
-- [ ] Using symmetric encryption (HMAC) instead of asymmetric RSA
+-  Using symmetric encryption (HMAC) instead of asymmetric RSA
 
 
 

@@ -1,5 +1,4 @@
-
-### **Who generates the access token?**
+**Who generates the access token?**
 
 - When a user (or process) logs on, the **Local Security Authority Subsystem Service (LSASS)** is responsible for authentication and token creation.
 - Steps:
@@ -13,7 +12,7 @@
         - Restrictions (integrity levels, session info, etc.)
 
 
-### **How is the token checked?**
+ **How is the token checked?**
 
 When you try to access a secured object (file, registry key, printer, etc.):
 
@@ -49,7 +48,7 @@ When a user starts a process or thread, a token will be assigned to
   process that owns the thread.
 
 
-### Windows Permissions 
+ **Windows Permissions** 
 
 
   An Access Control Entry (ACE) si an individual permission rule which
@@ -73,7 +72,7 @@ When a user starts a process or thread, a token will be assigned to
 
 
 
-### Windows Services
+ **Windows Services**
 
 Basically  programs that execute without user interaction and continue even aftert user logged off.
 
@@ -88,7 +87,7 @@ there area different type of services:
 
 
 
-### Mandatory Integrity Control "MIC"
+ **Mandatory Integrity Control "MIC"**
 
 provides a mechanism for controlling access to securable objects. this mechanism is in addition to access control 
 
@@ -97,7 +96,7 @@ when processes are started  or objects are created they receive the integrity le
 when the user attempts to launch an executable file,  the new process is created with the minimum of the user integrity level  and the file integrity level.
 
 
-### Mimikatz
+ **Mimikatz**
 
 Main Features of Mimikatz:
 - **Export credentials**: Can export plaintext passwords, NTLM hashes, Kerberos tickets, and pins from memory.

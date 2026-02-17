@@ -16,9 +16,9 @@ API usually documented so that developers know how to use and integrate them  mo
 
 use burp scanner to crawl the app 
 
-check  `/api/swagger/v1/users/123` 
+-   `/api/swagger/v1/users/123` 
 
-
+- check `?wsdl`
 
 # Server-side parameter pollution
 

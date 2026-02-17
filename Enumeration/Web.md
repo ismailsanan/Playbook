@@ -91,3 +91,11 @@ nc -nv  $IP 80
 /var/log/apache2/access.log&cmd=id
 
 ```
+
+
+### nuclei
+vulnerability scanner
+
+```sh
+nuclei -u http://example.com
+```

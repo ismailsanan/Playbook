@@ -32,7 +32,7 @@ sc start WindscribeService
 
 **This attack can be replicated also with Binary** 
 
-execute winPEASE  to basically check got modifiable binaries that have interesting privs 
+execute winPEAS  to basically check got modifiable binaries that have interesting privs 
 
 we can overwrite the service binary
 ```

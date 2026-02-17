@@ -1,8 +1,10 @@
 
-### Notes
-
 - When encountering blocked requests try to figure out what is blocking it we can basically send intercept a request by the proxy intercpet and intercept its response editing some data to make our payload work 
-- run a  %{abcdef123456789} bruteforce the blocked param to see if there is some chars removed by the server 
+- run a  %{abcdef123456789} bruteforce the blocked param to see if there is some chars removed by the server
+
+
+Sec
+
 
 
 **CSP Evaluator tool** to check if content security policy is in place to mitigate XSS attacks  [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
@@ -15,11 +17,6 @@ When input field maximum length is at only 23 character in length then use this 
 
 consider **Cookie stealer**  payloads
 - [cookie stealer payloads](https://github.com/botesjuan/Burp-Suite-Certified-Practitioner-Exam-Study/blob/5cbfeb2a11577ad62a31f72635a000bf5dcce293/payloads/CookieStealer-Payloads.md).
-
-
-# Payload Explained 
-
-- "-alert(1)-" -> works  because js basically lets you do this "foo" - 3 so injecting something like "foo" - alert() -  3 will take this as executable function and executes the alert() 
 
 
 - when you notice  there is a  **protocol error** it means that the website is thinking that the payload is split into 2 meaning `<svg onbegin>`  it thinks its 2 playload so what can we do is **URL ENCODE** the **SPACE**  or all of it 
