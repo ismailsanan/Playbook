@@ -1,22 +1,24 @@
 {
   "main": {
-    "id": "4a958a9359ad0599",
+    "id": "a709e9fe2806187e",
     "type": "split",
     "children": [
       {
-        "id": "3e2852a6f52fbbc4",
+        "id": "9c38e6dcf24c4e3f",
         "type": "tabs",
         "children": [
           {
-            "id": "d940a02e7006b56a",
+            "id": "24873da58b135b58",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "Attachements/Pasted image 20260114212823.png"
+                "file": "WebApp/OAuth 2.0.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "Pasted image 20260114212823"
+              "icon": "lucide-file",
+              "title": "OAuth 2.0"
             }
           }
         ]
@@ -25,15 +27,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "9c846013a630edf8",
+    "id": "27da9bf44427b98d",
     "type": "split",
     "children": [
       {
-        "id": "eda136705823330e",
+        "id": "3ba4fd5a181312ac",
         "type": "tabs",
         "children": [
           {
-            "id": "4b08a1b4a2bd3c49",
+            "id": "fc277eefaef52ad9",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -46,12 +48,12 @@
             }
           },
           {
-            "id": "a24070b7fad83930",
+            "id": "940c05e2e9cf930c",
             "type": "leaf",
             "state": {
               "type": "search",
               "state": {
-                "query": "evil-win",
+                "query": "tcpdu",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -63,7 +65,7 @@
             }
           },
           {
-            "id": "0d77de055fff8083",
+            "id": "b15f464f0be4da9e",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
@@ -76,18 +78,18 @@
       }
     ],
     "direction": "horizontal",
-    "width": 283.5
+    "width": 329.5
   },
   "right": {
-    "id": "daaa358db2a230ae",
+    "id": "f1832a488ab725ea",
     "type": "split",
     "children": [
       {
-        "id": "bac4a62f8e28dcad",
+        "id": "5953991459b0392f",
         "type": "tabs",
         "children": [
           {
-            "id": "12da44407f0fbe05",
+            "id": "fae4733fe0e61cd4",
             "type": "leaf",
             "state": {
               "type": "backlink",
@@ -105,7 +107,7 @@
             }
           },
           {
-            "id": "4241e19b90964f0f",
+            "id": "9bbe4209f8f9023d",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
@@ -118,7 +120,7 @@
             }
           },
           {
-            "id": "6515db8775afa126",
+            "id": "5bf203eed181583b",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -133,7 +135,21 @@
             }
           },
           {
-            "id": "218eed185ec1791b",
+            "id": "ef8271b0ba69820c",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-ghost",
+              "title": "all-properties"
+            }
+          },
+          {
+            "id": "78b0f8bf71c08e7d",
             "type": "leaf",
             "state": {
               "type": "outline",
@@ -164,46 +180,37 @@
       "bases:Create new base": false
     }
   },
-  "active": "4b08a1b4a2bd3c49",
+  "active": "24873da58b135b58",
   "lastOpenFiles": [
-    "Attachements/Pasted image 20260114230840.png",
-    "Active Directory/AD Exploits/Pass Stuff.md",
-    "Post Exploit/File Transfer.md",
-    "Active Directory/AD Tools.md",
-    "Priviledge Escalation/Windows/Mimikatz.md",
-    "Enumeration/Commands.md",
-    "Active Directory/AD Exploits/Trust Abuse.md",
-    "Active Directory/AD Exploits/Silver Ticket.md",
-    "Active Directory/AD Exploits/SID History Injection.md",
-    "Active Directory/AD Exploits/Kerboroasting.md",
-    "Active Directory/AD Exploits/ADCS.md",
-    "Active Directory/AD Exploits/ASREPRoast.md",
-    "Active Directory/AD Exploits/DCSync.md",
-    "Active Directory/AD Exploits/Delegation Attacks.md",
-    "Active Directory/AD Exploits/Golden Ticket.md",
-    "Active Directory/AD CheckList.md",
+    "Lab WalkThough/Proving Grounds/Access.md",
+    "Lab WalkThough/Proving Grounds/Vault.md",
+    "Lab WalkThough/Untitled.md",
+    "Lab WalkThough/Proving Grounds",
+    "Enumeration/Netexec.md",
+    "WebApp/XSS.md",
+    "WebApp/DOM-XSS.md",
+    "WebApp/Essential.md",
+    "WebApp/Directory  Traversal.md",
+    "WebApp/XFORM.md",
     "Active Directory/Bloodhound Custom Queries.md",
-    "Post Exploit/Access Machine.md",
-    "Lab WalkThough/oscp-C.md",
-    "Attachements/Pasted image 20260114225929.png",
-    "Attachements/Pasted image 20260114225927.png",
-    "Attachements/Pasted image 20260114225314.png",
-    "Priviledge Escalation/Windows/Credentials & files.md",
-    "Priviledge Escalation/Windows/Tools & Commands.md",
-    "Priviledge Escalation/Windows/Token Abuse.md",
-    "Attachements/Pasted image 20260114224845.png",
-    "Attachements/Pasted image 20260114224252.png",
-    "Attachements/Pasted image 20260114223900.png",
-    "Attachements/Pasted image 20260114223345.png",
-    "Enumeration/NXC.md",
-    "Lab WalkThough/oscp-C.md",
-    "Attachements/Pasted image 20260114223153.png",
-    "Attachements/Pasted image 20260114222151.png",
-    "Lab WalkThough/oscp-A.md",
-    "Post Exploit/Pivoting.md",
-    "Attachements/Pasted image 20260114214619.png",
-    "Lab WalkThough/Untitled",
-    "Attachements",
-    "Priviledge Escalation/Untitled"
+    "Active Directory/AD Tools.md",
+    "Active Directory/AD CheckList.md",
+    "Enumeration/Commands.md",
+    "Enumeration/DNS.md",
+    "WebApp/EXCEL FILES.md",
+    "WebApp/GraphQL API.md",
+    "WebApp/Hackvertor custom Tag.md",
+    "WebApp/HOMOGRAPH.md",
+    "WebApp/HTTP  smuggling.md",
+    "WebApp/HTTP Host header attacks.md",
+    "WebApp/Insecure deserialization.md",
+    "WebApp/JWT.md",
+    "WebApp/LLM Attacks.md",
+    "WebApp/JS.md",
+    "WebApp/NoSQL Injection.md",
+    "WebApp/PDF.md",
+    "Attachements/Pasted image 20260122123516.png",
+    "Pictures2.zip",
+    "Pictures.zip"
   ]
 }
