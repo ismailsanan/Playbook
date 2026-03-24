@@ -1,2 +1,3 @@
-# Playbook
-Playbook Collection
+This playbook is a collection of practical notes and techniques for red teaming and web application penetration testing. It covers common offensive security methods such as achieving code execution, exploiting injection flaws, evading defenses, moving laterally within networks, establishing persistence, and more.
+
+Most of these techniques are based on research and discoveries made by the broader security community. I do not claim ownership of this work. Wherever possible, I include references to original sources. If any attribution is missing or incorrect, please feel free to reach out so it can be corrected.
