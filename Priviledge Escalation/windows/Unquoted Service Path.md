@@ -29,3 +29,9 @@ Winpeas quiet serviceinfo
 
 - check for file permissions 
 - notes for no quotes and space detected 
+
+PowerUp
+
+```
+ Invoke-AllChecks
+```

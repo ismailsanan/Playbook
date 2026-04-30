@@ -68,7 +68,7 @@ then we can inject the dll in the system directory `C:\WINDOWS\SYSTEM32` which h
 DLL Hijacking involves a few more steps. First, you need to pinpoint a DLL the target is attempting to locate. Specific tools can simplify this task:
 
 1. Process Explorer: Part of Microsoft's Sysinternals suite, this tool offers detailed information on running processes, including their loaded DLLs. By selecting a process and inspecting its properties, you can view its DLLs.
-    
+
 2. PE Explorer: This Portable Executable (PE) Explorer can open and examine a PE file (such as a .exe or .dll). Among other features, it reveals the DLLs from which the file imports functionality.
 
 

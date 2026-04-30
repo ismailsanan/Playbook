@@ -2,7 +2,7 @@
 
 ```powershell 
 
-##########Credential Gethering 
+#Credential Gethering 
 type %userprofile%\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt
 
 #saved creds

@@ -1,3 +1,5 @@
+
+
 Attack against users with **"Do not require Kerberos pre-authentication"** enabled that Allows you to request TGT without knowing the password we can  crack hash for offline cracking
 
 Steps:

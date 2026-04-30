@@ -146,6 +146,8 @@ Get-DomainUser * -SPN | Get-DomainSPNTicket -Format Hashcat | Export-Csv .\kerbe
 #Get GPO Permessions
 Get-GPPermission -GUID 'ID' -TargetType User -TargetName 'OUR_USER'
 
+# priv escalation checks
+Invoke-AllChecks
 
 
 ```
@@ -163,9 +165,6 @@ Get-GPPermission -GUID 'ID' -TargetType User -TargetName 'OUR_USER'
 **Lightweight Directory Access Protocol (LDAP) directories**. It allows you to search and retrieve information from an **Active Directory (AD) or LDAP server**, such as **users, groups, computers, and other directory objects**.
 
 ```sh
-
-#ldap IP address we are searching for the informaion in the Active Directory (AD) domain name (group,user, policy , computer....)
-ldapsearch -x -H ldap://192.168.121.122 -b "DC=hutch,DC=offsec0" "(objectClass=*)" 
 
 #enum with username
 ldapsearch -x -H ldap://192.168.121.122 -D 'Domain\username' -b "DC=hutch,DC=offsec0" "(objectClass=*)" 

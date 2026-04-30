@@ -1,5 +1,13 @@
+
+Code Review SecHeaderScout
+
+
+
+## Hackvector Custom Tag
+
 when is this useful
-- when we have a dependency/ies in a specific value of a request where  
+- when we have a dependency/ies in a specific value of a request
+- when we are trying evasion techniques like encoding values 
 
 Useful Scenario
 
@@ -29,6 +37,5 @@ and we can use `input` for inputs that are selected between the tags
 Add the custom tag in the desired input
 ### Reference
 
-inspired by:
 - https://www.pmnh.site/post/howto-hackvertor-request-resigning/
 
