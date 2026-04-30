@@ -1,8 +1,6 @@
 
 Code Review SecHeaderScout
 
-
-
 ## Hackvector Custom Tag
 
 when is this useful
