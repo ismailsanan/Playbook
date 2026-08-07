@@ -48,20 +48,12 @@ nmap -p- -Pn -n 10.10.10.10
 
 
 **Unicornscan**
-
 equivilant to nmap and uses all payloads
 
 
-**SSH**
-
-```
-
-```
 
 
 NOTE
-
-
 ```txt
 
 if the result of the hping3 packet has id set adn incrementing it means its windows if its always 0 it means its linux 

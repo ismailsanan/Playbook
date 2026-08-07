@@ -1,7 +1,21 @@
 
+>Basic
+```sh
+smbmap -H $IP
 
-> Basic
-```bash 
+smbmap -R <Share> -H $IP
+
+#Dump  file
+smbmap -r <ShareName> -H $IP -A FIle -q
+
+#exec commmands
+smbmap -H {IP} -u admin -P 'Password' -x 'whoami ' 
+
+#domain
+
+smbmap -d $domani -u ....
+ 
+#samba tool 
 smbclient -L //10.10.11.35/
 
 smbclient  //10.10.11.35//<share_name>
@@ -9,6 +23,12 @@ smbclient  //10.10.11.35//<share_name>
 smbclient //10.10.11.174/support-tools -U guest
 
 smbclient //10.10.11.174/support-tools -U oscp/guest
+
+
+#impacket Tool 
+
+smbclient.py  -no-pass guest@10.129.231.149
+
 ```
 
 >CVE
@@ -55,19 +75,3 @@ nxc smb ${NASIP} -u 'guest' -p '' -M spider_plus -o DOWNLOAD_FLAG=True
 ```
 
 
->Basic
-```sh
-smbmap -H $IP
-
-smbmap -R <Share> -H $IP
-
-#Dump  file
-smbmap -r <ShareName> -H $IP -A FIle -q
-
-#exec commmands
-smbmap -H {IP} -u admin -P 'Password' -x 'whoami ' 
-
-#domain
-
-smbmap -d $domani -u ....
-```

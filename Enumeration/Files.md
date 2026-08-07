@@ -1,44 +1,46 @@
+```bash
 
-> allows you to read and write meta information in files
-```sh
- exiftool ocean.jpg
-```
+#allows you to read and write meta information in files
 
->file allows you to see the file type
-```sh
+exiftool ocean.jpg
+
+
+#file allows you to see the file type
+
 file ocean.jpg
-```
 
 
->xxd allows you to dump a file in a hexadecimal (hex) format.
-```sh
+
+#dump a file in a hexadecimal (hex) format.
+
  xxd computer.jpg
-```
 
->The strings command will print out strings from binary 
-```sh
+
+# print out strings from binary 
+
 strings computer.jpg
-```
 
 
->Binwalk is a tool that allows you to search binary images for embedded files and executable code.
-```sh
+
+#search binary images for embedded files and executable code.
+
 binwalk dog.jpg
 
 #Automatically extract known file types
 binwalk -e dog.jpg 
-```
 
 
->check the dynamic libraries 
-```
+
+#check the dynamic libraries 
+
 ldd psp64
-```
 
 
->information gathering metadata
-```sh
-#Metagoofil is an open-source information-gathering tool designed to extract metadata from public documents available on websites
+
+
+#extract metadata from public documents available on websites
+
 metagoofil -d [domain] -t [filetypes] -l [limit] -n [number] -o [output_directory] -f [output_file]
 
 ```
+

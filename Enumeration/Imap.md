@@ -1,5 +1,5 @@
 
-The **Internet Message Access Protocol (IMAP)** is designed for the purpose of enabling users to **access their email messages from any location**, primarily through an Internet connection.
+The Internet Message Access Protocol (IMAP) is designed for the purpose of enabling users to access their email messages from any location, primarily through an Internet connection.
 
 By default, the IMAP protocol works on two ports:
 

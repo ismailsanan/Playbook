@@ -1,17 +1,26 @@
-> 
+
 ```shell
 
 #enum for DNS
 dnsrecon -d 10.10.10.100 -r 10.0.0.0/8
 
-#zone transfer  
-dig DOMAIN NS
-dig @NS DOMAIN axfr 
 
-dig axfr {DOMAIN}@{IP}
+
+#zone transfer  
+#check which is the authoratative dns
+dig NS {DOMAIN} 
+
+#check the primary name server 
+dig SOA {DOMAIN}
+
+#check for allows transfers
+dig AXFR {DOMAIN} @{NS / IP_NS}
 
 # check if there control over mail server 
-dig DOMAIN MX
+dig MX {DOMAIN} 
+
+#Find text records
+dig TXT {DOMAIN}
 
 
 nslookup

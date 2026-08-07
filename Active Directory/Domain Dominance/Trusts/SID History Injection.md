@@ -8,10 +8,10 @@ With Domain Administrator (or equivalent) rights, harvested or well-known SID va
 the attacker must have the ability to write the `SIDHistory` attribute for a user. This is typically achieved by compromising an account that has:
 
 - The **`SeEnableDelegationPrivilege`** (often held by Domain Controllers via their `Account is trusted for delegation` setting).
-    
+
 - Or, more directly, the **`mS-DS-MachineAccountQuota`** attribute allows any authenticated user to create up to 10 computer accounts by default. An attacker can create a computer account and then use it in a Kerberos-based attack (like **DCSync**) to obtain the necessary privileges.
-- 
-user A domain ad  move or recreate  to other domain  so idealy if we grab sid we can access resources to previous one grab from B access in domain A
+
+- user A domain ad  move or recreate  to other domain  so idealy if we grab sid we can access resources to previous one grab from B access in domain A
 
 
 ```powershell

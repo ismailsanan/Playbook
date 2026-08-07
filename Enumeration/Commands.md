@@ -91,6 +91,7 @@ curl --user offsec:elite 192.168.68.46:242/pwn.php
 
 # What will the shell actually run when I type this command
 type -a 
+
 ------------------Sublime---------------------
 #replace multiple new line with one
 ctrl+H
@@ -105,9 +106,16 @@ ctrl+H
 
 ---------------- BASH ---------------------
 
+#update my pc accourding to the domain date and time
+sudo ntpdate -u dc.sequel.htb
+
+
 #delemeter \  take the first field and print the first arguement output them as user.txt 
 
 cat user | cut -d "\\" -f 1 | awk '{print $1}' | tee user.txt
+
+#print the firth field
+cat file.txt | awk '{print $5}'
 
 #print first argument 
 cat ports | awk -F/ '{print $1}' > ports.nunber
@@ -117,6 +125,12 @@ $@
 
 #execute the previous command
 !!
+
+#Last argument of the previous command
+!$
+
+#All arguments from the previous command
+!*
 ----------- WINDOWS ------------------
 
 #spawns a shell with specific user  

@@ -6,4 +6,10 @@
 
 #continues even with success
 --continue-on-success
+
+
+#bloodhound in ldap 
+
+--bloodhound -c All
+
 ```

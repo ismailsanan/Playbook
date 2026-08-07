@@ -15,11 +15,8 @@ When a service path is unquoted, Windows tries to execute it in a specific order
 Windows will try to execute, **in order**:
 
 1. `C:\Program.exe`
-    
 2. `C:\Program Files\My.exe`
-    
 3. `C:\Program Files\My App\My.exe`
-    
 4. `C:\Program Files\My App\My Service\service.exe`
 
 

